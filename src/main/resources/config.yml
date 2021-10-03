@@ -1,0 +1,17 @@
+Island:
+  Admin:
+    Structure:
+      # Item Material used to select the SpawnZone that can't be edited by any player
+      SpawnZoneSelector: "GOLDEN_AXE"
+Raid:
+  Spectate:
+    Menu:
+      Exit:
+        Item: 'RED_BED'
+        ItemSlot: 0
+      Raid:
+        Item: 'RED_CONCRETE'
+        ItemSlot: 4
+      Next:
+        Item: 'LIME_CONCRETE'
+        ItemSlot: 8

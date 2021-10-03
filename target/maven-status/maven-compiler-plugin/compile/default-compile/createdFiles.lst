@@ -1,0 +1,12 @@
+me\ResurrectAjax\Listeners\CommandListener.class
+me\ResurrectAjax\Playerdata\PlayerDataManager.class
+me\ResurrectAjax\Mysql\Error.class
+me\ResurrectAjax\Utils\Structure\SpawnZoneArea.class
+me\ResurrectAjax\Main\Main.class
+me\ResurrectAjax\Mysql\Errors.class
+me\ResurrectAjax\Utils\Structure\StructureUtil.class
+me\ResurrectAjax\Mysql\FastDataAccess.class
+me\ResurrectAjax\Playerdata\PlayerData.class
+me\ResurrectAjax\Mysql\MysqlMain.class
+me\ResurrectAjax\Listeners\BlockListeners.class
+me\ResurrectAjax\Mysql\Database.class

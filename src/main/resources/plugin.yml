@@ -1,0 +1,12 @@
+main: me.ResurrectAjax.Main.Main
+depend: [FabledSkyBlock]
+name: FabledSkyBlock-RezAjax
+version: 1.0.0
+author: ResurrectAjax
+description: FabledSkyBlock fork
+api-version: 1.17
+
+commands:
+  Raid:
+    description: get the commands
+    usage: /<command>

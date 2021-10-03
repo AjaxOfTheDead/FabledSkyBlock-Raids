@@ -1,0 +1,49 @@
+Command:
+  Island:
+    SpawnZone:
+      Permission:
+        Message: '&bSkyBlock &8| &cError&8: &eYou are not allowed to make changes to the SpawnZone.'
+    Admin:
+      Structure:
+        SpawnZoneTool:
+          Info:
+            Message: '&f&oGives the player the SpawnZone tool item.'
+          Equiped:
+            Message: '&bSkyBlock &8| &aInfo&8: &eYou have been given the SpawnZone tool.'
+          Inventory:
+            Message: '&bSkyBlock &8| &cError&8: &eYou already have the Structure and SpawnZone tools in your inventory.'
+        Save:
+          SpawnPosition:
+            Message: '&bSkyBlock &8| &cError&8: &ePlease use the SpawnZone tool to select two positions of an area.'
+          SpawnComplete:
+            Message: '&bSkyBlock &8| &cError&8: &ePlease complete the area selection by using the SpawnZone tool and selecting two positions of an area.'
+  Execute:
+    ByConsole:
+      Message: '&bSkyBlock &8| &cError&8: &eThat command has to be executed by a player.'
+Island:
+  Structure:
+    SpawnZoneTool:
+      Position:
+        Message: '&bSkyBlock &8| &aInfo&8: &bPosition &d%position &bhas been selected!'
+      Material:
+        Message: '&bSkyBlock &8| &cError&8: &bThe defined material in the configuration file for the SpawnZone selection tool could not be found.'
+      Item:
+        Displayname: '&bSpawnZone Tool'
+        Lore:
+        - '&7Select two positions of'
+        - '&7an area.'
+Raid:
+  Spectate:
+    Menu:
+      Exit:
+        Name: '&4&lExit'
+        Lore:
+        - '&7Exit scout mode'
+      Raid:
+        Name: '&c&lRaid'
+        Lore:
+        - '&7Raid the island'
+      Next:
+        Name: '&a&lNext'
+        Lore:
+        - '&7Scout the next island'
