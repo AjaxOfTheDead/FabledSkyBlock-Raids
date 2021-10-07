@@ -11,6 +11,7 @@ public class FastDataAccess {
 	private Database db;
 	
 	private HashMap<UUID, Location[]> spawnZones;
+	private HashMap<UUID, Location> spawnPositions;
 	private HashMap<String, HashMap<String, Integer>> structures;
 	
 	public FastDataAccess(Database db) {
@@ -19,28 +20,38 @@ public class FastDataAccess {
 	
 	public void putAllSpawnZones() {
 		spawnZones = new HashMap<UUID, Location[]>();
+		spawnPositions = new HashMap<UUID, Location>();
 		List<List<String>> databaseSpawnZones = db.getSpawnZones();
 		
 		for(int i = 0; i < databaseSpawnZones.size(); i++) {
 			UUID uuid = UUID.fromString(databaseSpawnZones.get(i).get(0));
 			
-			String posX, posY, world = databaseSpawnZones.get(i).get(3);
-			Location pos1, pos2;
+			String posX, posZ, world = databaseSpawnZones.get(i).get(4), posXspawn, posZspawn;
+			Location pos1, pos2, spawnpos;
 			Location[] zone = new Location[2];
 			
 			posX = databaseSpawnZones.get(i).get(1).split(":")[0];
-			posY = databaseSpawnZones.get(i).get(1).split(":")[1];
-			pos1 = new Location(Bukkit.getWorld(world), Integer.parseInt(posX), 0, Integer.parseInt(posY));
+			posZ = databaseSpawnZones.get(i).get(1).split(":")[1];
+			pos1 = new Location(Bukkit.getWorld(world), Integer.parseInt(posX), 0, Integer.parseInt(posZ));
 			
 			posX = databaseSpawnZones.get(i).get(2).split(":")[0];
-			posY = databaseSpawnZones.get(i).get(2).split(":")[1];
-			pos2 = new Location(Bukkit.getWorld(world), Integer.parseInt(posX), 0, Integer.parseInt(posY));
+			posZ = databaseSpawnZones.get(i).get(2).split(":")[1];
+			pos2 = new Location(Bukkit.getWorld(world), Integer.parseInt(posX), 0, Integer.parseInt(posZ));
+			
+			posXspawn = databaseSpawnZones.get(i).get(3).split(":")[0];
+			posZspawn = databaseSpawnZones.get(i).get(3).split(":")[1];
+			spawnpos = new Location(Bukkit.getWorld(world), Double.parseDouble(posXspawn), 0, Double.parseDouble(posZspawn));
 			
 			zone[0] = pos1;
 			zone[1] = pos2;
 			
 			spawnZones.put(uuid, zone);
+			spawnPositions.put(uuid, spawnpos);
 		}
+	}
+	
+	public HashMap<UUID, Location> getSpawnPositions() {
+		return spawnPositions;
 	}
 	
 	public void putAllStructures() {
@@ -51,7 +62,6 @@ public class FastDataAccess {
 			String name = databaseStructures.get(i).get(0);
 			
 			String pos1X, pos1Z, pos2X, pos2Z;
-			Location pos1, pos2;
 			HashMap<String, Integer> positions = new HashMap<String, Integer>();
 			
 			pos1X = databaseStructures.get(i).get(1).split(":")[0];
@@ -88,14 +98,31 @@ public class FastDataAccess {
 		
 	}
 	
-	public void putSpawnZone(UUID uuid, Location first, Location second, String world) {
+	public void putSpawnZone(UUID uuid, Location first, Location second, Location spawnpos, String world) {
 		Location[] zone = new Location[2];
 		
 		zone[0] = first;
 		zone[1] = second;
 		
 		spawnZones.put(uuid, zone);
+		spawnPositions.put(uuid, spawnpos);
 		
+	}
+
+	
+	public UUID getOwnerByLocation(Location location) {
+		UUID owner = null;
+		for(UUID uuid : spawnPositions.keySet()) {
+			if(spawnPositions.get(uuid) == location) {
+				owner = uuid;
+			}
+		}
+		return owner;
+	}
+	
+	public void removeSpawnZone(UUID uuid) {
+		spawnZones.remove(uuid);
+		spawnPositions.remove(uuid);
 	}
 	
 	public HashMap<String, HashMap<String, Integer>> getStructures() {

@@ -248,7 +248,7 @@ public class BlockListeners implements Listener{
     			posZmin = spawnPos1.getBlockZ();
     		}
     		
-    		org.bukkit.util.Vector vector = new org.bukkit.util.Vector(block.getLocation().getBlock().getLocation().getBlockX(), block.getLocation().getBlock().getLocation().getBlockY(), block.getLocation().getBlock().getLocation().getBlockZ()),
+    		org.bukkit.util.Vector vector = new org.bukkit.util.Vector(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()),
     				vector1 = new org.bukkit.util.Vector(posXmin, 0, posZmin),
 					vector2 = new org.bukkit.util.Vector(posXmax, 255, posZmax);
     		

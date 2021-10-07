@@ -4,7 +4,7 @@ Island:
       # Item Material used to select the SpawnZone that can't be edited by any player
       SpawnZoneSelector: "GOLDEN_AXE"
 Raid:
-  Spectate:
+  RaidFinder:
     Menu:
       Exit:
         Item: 'RED_BED'
@@ -15,3 +15,10 @@ Raid:
       Next:
         Item: 'LIME_CONCRETE'
         ItemSlot: 8
+    ScoutTime: 30
+    BossBar:
+      Color: "RED"
+  Raid:
+    RaidTime: 300
+    BossBar:
+      Color: "RED"

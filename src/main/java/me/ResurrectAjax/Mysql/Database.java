@@ -55,6 +55,7 @@ public abstract class Database {
                 zone.add(rs.getString("uuid"));
                 zone.add(rs.getString("pos1"));
                 zone.add(rs.getString("pos2"));
+                zone.add(rs.getString("spawnpos"));
                 zone.add(rs.getString("world"));
                 
                 zones.add(zone);
@@ -142,12 +143,12 @@ public abstract class Database {
     // Exact same method here, Except as mentioned above i am looking for total!
 
 // Now we need methods to save things to the database
-    public void setSpawnZones(String uuid, String pos1, String pos2, String world) {
+    public void setSpawnZones(String uuid, String pos1, String pos2, String spawnpos, String world) {
         Connection conn = null;
         PreparedStatement ps = null;
         try {
             conn = getSQLConnection();
-            ps = conn.prepareStatement("INSERT INTO SpawnZones (uuid,pos1,pos2,world) VALUES(?,?,?,?)");
+            ps = conn.prepareStatement("INSERT INTO SpawnZones (uuid,pos1,pos2,spawnpos,world) VALUES(?,?,?,?,?)");
             ps.setString(1, uuid); 
             
             
@@ -157,10 +158,14 @@ public abstract class Database {
             
             
             ps.setString(3, pos2);
+
+            
+            
+            ps.setString(4, spawnpos);
             
             
             
-            ps.setString(4, world);
+            ps.setString(5, world);
             ps.executeUpdate();
             return;
         } catch (SQLException ex) {

@@ -26,6 +26,7 @@ public class MysqlMain extends Database{
     		"`uuid` varchar(32)," +
     		"`pos1` varchar(6) NOT NULL," + // This creates the different colums you will save data too. varchar(32) Is a string, int = integer
             "`pos2` varchar(6) NOT NULL," +
+            "`spawnpos` varchar(6) NOT NULL," +
             "`world` varchar(32) NOT NULL" +
             ");"; // we can search by player, and get kills and total. If you some how were searching kills it would provide total and player.
     

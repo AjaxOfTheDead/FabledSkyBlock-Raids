@@ -24,7 +24,6 @@ import com.songoda.skyblock.utils.world.LocationUtil;
 
 import io.papermc.lib.PaperLib;
 import me.ResurrectAjax.Main.Main;
-import me.ResurrectAjax.Playerdata.PlayerData;
 import me.ResurrectAjax.Playerdata.PlayerDataManager;
 
 public class JoinListeners implements Listener {
@@ -75,8 +74,9 @@ public class JoinListeners implements Listener {
             }
         
             playerDataManager.loadPlayerData(player);
+            plugin.getPlayerDataManager().loadPlayerData(player);
         
-            if (playerDataManager.hasPlayerData(player)) {
+            if (playerDataManager.hasPlayerData(player) || plugin.getPlayerDataManager().hasPlayerData(player)) {
                 String[] playerTexture;
             
                 try {
@@ -91,15 +91,19 @@ public class JoinListeners implements Listener {
                             "eyJ0aW1lc3RhbXAiOjE1MjkyNTg0MTE4NDksInByb2ZpbGVJZCI6Ijg2NjdiYTcxYjg1YTQwMDRhZjU0NDU3YTk3MzRlZWQ3IiwicHJvZmlsZU5hbWUiOiJTdGV2ZSIsInNpZ25hdHVyZVJlcXVpcmVkIjp0cnVlLCJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZGMxYzc3Y2U4ZTU0OTI1YWI1ODEyNTQ0NmVjNTNiMGNkZDNkMGNhM2RiMjczZWI5MDhkNTQ4Mjc4N2VmNDAxNiJ9LCJDQVBFIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjc2N2Q0ODMyNWVhNTMyNDU2MTQwNmI4YzgyYWJiZDRlMjc1NWYxMTE1M2NkODVhYjA1NDVjYzIifX19"};
                 }
             
-                PlayerData playerData = playerDataManager.getPlayerData(player);
-                playerData.setTexture(playerTexture[0], playerTexture[1]);
-                Bukkit.getScheduler().runTaskAsynchronously(plugin, playerData::save);
+                com.songoda.skyblock.playerdata.PlayerData playerDatas = plugin.getPlayerDataManager().getPlayerData(player);
+                playerDatas.setTexture(playerTexture[0], playerTexture[1]);
+                Bukkit.getScheduler().runTaskAsynchronously(plugin, playerDatas::save);
             } else {
                 playerDataManager.createPlayerData(player);
                 playerDataManager.loadPlayerData(player);
+                
+                plugin.getPlayerDataManager().createPlayerData(player);
+                plugin.getPlayerDataManager().loadPlayerData(player);
             }
         
             playerDataManager.storeIsland(player);
+            plugin.getPlayerDataManager().storeIsland(player);
         
             cooldownManager.addCooldownPlayer(CooldownType.Biome, cooldownManager.loadCooldownPlayer(CooldownType.Biome, player));
             cooldownManager.addCooldownPlayer(CooldownType.Creation, cooldownManager.loadCooldownPlayer(CooldownType.Creation, player));
@@ -116,7 +120,7 @@ public class JoinListeners implements Listener {
             SkyBlock.getInstance().getFabledChallenge().getPlayerManager().loadPlayer(player.getUniqueId());
             
             Bukkit.getScheduler().runTask(plugin, () -> {
-                if (playerDataManager.getPlayerData(player).isScoreboard()) {
+                if (plugin.getPlayerDataManager().getPlayerData(player).isScoreboard()) {
                     scoreboardManager.updatePlayerScoreboardType(player);
                 }
             });

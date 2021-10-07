@@ -33,7 +33,7 @@ Island:
         - '&7Select two positions of'
         - '&7an area.'
 Raid:
-  Spectate:
+  RaidFinder:
     Menu:
       Exit:
         Name: '&4&lExit'
@@ -47,3 +47,19 @@ Raid:
         Name: '&a&lNext'
         Lore:
         - '&7Scout the next island'
+    BossBar:
+      Title: '&fScouting Island: %TimeLeft%s'
+  Raid:
+    Outcome:
+      Won:
+        Message: '&bSkyBlock &8| &aInfo&8: &eYou''ve won the raid!'
+      Lost:
+        Message: '&bSkyBlock &8| &aInfo&8: &eYou''ve lost the raid.'
+    Teleport:
+      Denied:
+        Message: '&bSkyBlock &8| &cError&8: &eYou can''t teleport to players while they are in a raid.'
+    BossBar:
+      Title: '&fRaiding Island: %TimeLeft%s'
+  Error:
+    NotEnoughIslands:
+      Message: '&bSkyBlock &8| &cError&8: &eThere are not enough islands to raid.'
