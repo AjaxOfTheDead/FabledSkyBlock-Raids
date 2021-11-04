@@ -1,9 +1,7 @@
 package me.ResurrectAjax.Main;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -14,7 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.Plugin;
@@ -22,24 +20,26 @@ import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.songoda.skyblock.SkyBlock;
-import com.songoda.skyblock.listeners.MoveListeners;
+import com.songoda.skyblock.config.FileManager.Config;
 
+import me.ResurrectAjax.Commands.Managers.CommandInterface;
+import me.ResurrectAjax.Commands.Managers.CommandManager;
 import me.ResurrectAjax.Commands.Managers.FileManager;
-import me.ResurrectAjax.Commands.Raid.RaidBar;
-import me.ResurrectAjax.Commands.Raid.RaidCommand;
-import me.ResurrectAjax.Commands.Raid.RaidMethods;
 import me.ResurrectAjax.Listeners.BlockListeners;
 import me.ResurrectAjax.Listeners.CommandListener;
 import me.ResurrectAjax.Listeners.InteractListeners;
 import me.ResurrectAjax.Listeners.IslandListener;
 import me.ResurrectAjax.Listeners.JoinListeners;
+import me.ResurrectAjax.Listeners.MoveListeners;
 import me.ResurrectAjax.Listeners.RaidListener;
 import me.ResurrectAjax.Mysql.Database;
 import me.ResurrectAjax.Mysql.FastDataAccess;
 import me.ResurrectAjax.Mysql.MysqlMain;
 import me.ResurrectAjax.Playerdata.PlayerDataManager;
-import me.ResurrectAjax.Raid.RaidParty;
+import me.ResurrectAjax.Raid.RaidManager;
+import me.ResurrectAjax.Raid.RaidMethods;
 import me.ResurrectAjax.Raid.ItemStorage.ItemStorage;
+import me.ResurrectAjax.RaidGUI.GuiManager;
 
 public class Main extends JavaPlugin{
 	private static Main INSTANCE;
@@ -53,13 +53,20 @@ public class Main extends JavaPlugin{
 	
 	private FileConfiguration language;
 	private FileConfiguration config;
+	private FileConfiguration guiConfig;
 	
 	private ItemStorage storage;
+
+	private RaidManager raidManager;
 	
-	private HashMap<UUID, RaidBar> raidBars = new HashMap<UUID, RaidBar>();
-	private HashMap<UUID, RaidParty> raidParty = new HashMap<UUID, RaidParty>();
+	private GuiManager guiManager;
 	
-	private RaidMethods raidmethods;
+	private RaidMethods raidMethods;
+	
+	private CommandManager commandManager;
+	
+	private TabCompletion tabCompleter;
+	
 	
 	public static Main getInstance() {
         return INSTANCE;
@@ -78,7 +85,6 @@ public class Main extends JavaPlugin{
 		this.db = new MysqlMain(this);
 		this.db.load();
 		
-		
 		loadFiles();
 
 		getServer().getPluginManager().registerEvents(new CommandListener(skyblock, this), this);
@@ -87,6 +93,7 @@ public class Main extends JavaPlugin{
 		getServer().getPluginManager().registerEvents(new IslandListener(this), this);
 		getServer().getPluginManager().registerEvents(new RaidListener(this), this);
 		getServer().getPluginManager().registerEvents(new JoinListeners(this), this);
+		getServer().getPluginManager().registerEvents(new MoveListeners(skyblock), this);
 		
 		//database
 		
@@ -99,14 +106,17 @@ public class Main extends JavaPlugin{
 		
 		//unregister listeners
 		PlayerJoinEvent.getHandlerList().unregister(skyblock);
+		PlayerDeathEvent.getHandlerList().unregister(skyblock);
+		PlayerMoveEvent.getHandlerList();
+		for(RegisteredListener regis : HandlerList.getRegisteredListeners(skyblock)) {
+			if(regis.getListener().getClass() == com.songoda.skyblock.listeners.MoveListeners.class) {
+				PlayerMoveEvent.getHandlerList().unregister(regis);
+			}
+		}
+		
+		getCommand("raidparty").setTabCompleter(tabCompleter);
 		
 	
-	}
-	
-	public void onDisable() {
-		for(UUID uuid : storage.getItemStorage().keySet()) {
-			raidmethods.exitRaidSpectator(Bukkit.getPlayer(uuid));	
-		}
 	}
 	
 	public boolean hookFabledSkyBlock() {
@@ -124,19 +134,55 @@ public class Main extends JavaPlugin{
 		return false;
 	}
 	
-	
+	public void onDisable() {
+		for(Player player : Bukkit.getOnlinePlayers()) {
+			raidMethods.onRaiderQuit(player);
+			raidMethods.onSpectatorQuit(player);	
+		}
+	}
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(sender instanceof Player) {
 			Player player = (Player)sender;
 			
-			if(label.equalsIgnoreCase("raid")) {
-				if(skyblock.getIslandManager().getIsland(player) != null) {
-					new RaidCommand(this, player);
-				}
-				else {
-					player.sendMessage(ChatColor.translateAlternateColorCodes('&', skyblock.getLanguage().getString("Command.Island.Bans.Owner.Message")));
+			
+			for(CommandInterface command : commandManager.getCommands()) {
+				if(label.equalsIgnoreCase(command.getName())) {
+					if(skyblock.getIslandManager().getIsland(player) != null) {
+						if(command.getArguments().length > 0) {
+							switch(args.length) {
+								case 1:
+									command.perform(player, args);
+									break;
+								case 2:
+								case 3:
+									if(command.getSubCommands() != null) {
+										for(CommandInterface subcommands : command.getSubCommands()) {
+											for(int i = 0; i < args.length; i++) {
+												if(subcommands.getName().equalsIgnoreCase(args[i])) {
+													command.perform(player, args);
+												}
+											}
+										}	
+									}
+									else {
+										command.perform(player, args);
+									}
+									break;
+								default:
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Command.Execute.NotExist.Message")));
+									break;
+							}
+						}
+						else {
+							command.perform(player, args);
+						}
+						
+					}
+					else {
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', skyblock.getLanguage().getString("Command.Island.Bans.Owner.Message")));
+					}
 				}
 			}
 		}
@@ -171,6 +217,10 @@ public class Main extends JavaPlugin{
     	return language;
     }
     
+    public GuiManager getGuiManager() {
+    	return guiManager;
+    }
+    
     public FileConfiguration getConfiguration() {
         return config;
     }
@@ -178,29 +228,33 @@ public class Main extends JavaPlugin{
     public ItemStorage getStorage() {
     	return storage;
     }
+ 
     
-    public HashMap<UUID, RaidBar> getBossBar() {
-    	return raidBars;
+    public RaidManager getRaidManager() {
+    	return raidManager;
     }
     
-    public HashMap<UUID, RaidParty> getRaidParties() {
-    	return raidParty;
-    }
     
-    public RaidMethods getRaidMethods() {
-    	return raidmethods;
+    public FileConfiguration getGuiConfig() {
+    	return guiConfig;
     }
-    
-    public void addRaidBar(UUID uuid, RaidBar bar) {
-    	raidBars.put(uuid, bar);
-    }
-    
-    public void addRaidParty(UUID uuid, RaidParty party) {
-    	raidParty.put(uuid, party);
-    }
+
     
     public HashMap<UUID, Location> getIslandPositions() {
     	return fdb.getSpawnPositions();
+    }
+    
+    public RaidMethods getRaidMethods() {
+    	return raidMethods;
+    }
+    
+    public Location getSpawnLocation() {
+    	Config config = skyblock.getFileManager().getConfig(new File(skyblock.getDataFolder(), "locations.yml"));
+    	return skyblock.getFileManager().getLocation(config, "Location.Spawn", true);
+    }
+    
+    public CommandManager getCommandManager() {
+    	return commandManager;
     }
     //ResurrectAjax getters
 	
@@ -216,13 +270,21 @@ public class Main extends JavaPlugin{
         fileManager = new FileManager(this);
         config = this.getFileManager().getConfig(new File(this.getDataFolder(), "config.yml")).getFileConfiguration();
         language = this.getFileManager().getConfig(new File(this.getDataFolder(), "language.yml")).getFileConfiguration();
+        guiConfig = this.getFileManager().getConfig(new File(this.getDataFolder(), "gui.yml")).getFileConfiguration();
         
         playerDataManager = new PlayerDataManager(skyblock);
         
         storage = new ItemStorage(this);
         
-        raidmethods = new RaidMethods(this);
+        raidManager = new RaidManager(this);
         
+        raidMethods = new RaidMethods(this);
+        
+        commandManager = new CommandManager(this);
+        
+        tabCompleter = new TabCompletion(this);
+        
+        guiManager = new GuiManager(this);
 	}
 
 }

@@ -33,7 +33,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.google.common.io.ByteStreams;
-import com.songoda.skyblock.island.IslandWorld;
 
 import me.ResurrectAjax.Main.Main;
 
@@ -57,6 +56,7 @@ public class FileManager {
         
         Map<String, File> configFiles = new LinkedHashMap<>();
         configFiles.put("language.yml", new File(plugin.getDataFolder(), "language.yml"));
+        configFiles.put("gui.yml", new File(plugin.getDataFolder(), "gui.yml"));
 
         for (Entry<String, File> configEntry : configFiles.entrySet()) {
 
@@ -65,10 +65,10 @@ public class FileManager {
 
             if (configFile.exists()) {
                 if (fileName.equals("config.yml") ||
-                        fileName.equals("language.yml")) {
+                        fileName.equals("language.yml") || fileName.equals("gui.yml")) {
                     FileChecker fileChecker;
 
-                    if (fileName.equals("config.yml") || fileName.equals("biomes.yml")) {
+                    if (fileName.equals("config.yml")) {
                         fileChecker = new FileChecker(plugin, this, fileName, true);
                     } else {
                         fileChecker = new FileChecker(plugin, this, fileName, false);

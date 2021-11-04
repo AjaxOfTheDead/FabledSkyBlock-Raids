@@ -1,0 +1,9 @@
+Raid:
+  BackgroundItem: 'GRAY_STAINED_GLASS_PANE'
+  Items:
+    Exit:
+      Material: 'RED_CONCRETE'
+      ItemSlot: 0
+      Name: '&4&lExit'
+      Lore:
+      - '&7Exit the RaidParty GUI'

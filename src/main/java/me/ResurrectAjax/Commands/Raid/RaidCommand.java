@@ -1,80 +1,82 @@
 package me.ResurrectAjax.Commands.Raid;
 
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
-import com.songoda.skyblock.island.IslandEnvironment;
-import com.songoda.skyblock.island.IslandWorld;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 import me.ResurrectAjax.Main.Main;
-import me.ResurrectAjax.Mysql.FastDataAccess;
+import me.ResurrectAjax.Raid.RaidManager;
+import me.ResurrectAjax.Raid.RaidMethods;
 import me.ResurrectAjax.Raid.RaidParty;
-import me.ResurrectAjax.Raid.ItemStorage.ItemStorage;
-import net.md_5.bungee.api.ChatColor;
 
 public class RaidCommand extends CommandInterface{
-	private Main main;
 	private RaidMethods raidMethods;
-	private FastDataAccess fdb;
+	private RaidManager raidManager;
+	private Main main;
 	
-	public RaidCommand(Main main, Player player) {
+	public RaidCommand(Main main) {
 		this.main = main;
 		this.raidMethods = main.getRaidMethods();
-		fdb = main.getFastDataAccess();
-		perform(player);
-	}
+		this.raidManager = main.getRaidManager();
+	} 
 	
 	public String getName() {
 		return "raid";
 	}
 	
-	public void startRaid(Player player, Location spectateLocation) {
-		for(Player players : Bukkit.getOnlinePlayers()) {
-			if(players != player) {
-				players.hidePlayer(main, player);
-			}
-		}
-		player.setAllowFlight(true);
-		player.setInvulnerable(true);
-		
-		player.teleport(spectateLocation);
-		
+	public String getSyntax() {
+		return "/raid";
+	}
+	
+	public String getDescription() {
+		return "Raid an island";
+	}
+	
+	public String[] getArguments() {
+		String[] arguments = new String[] {};
+		return arguments;
 	}
 
-	public void perform(Player player) {
-		if(main.getIslandPositions().size() > 1) {
-			Location location =  raidMethods.pickIsland(player.getUniqueId());
-			Location spectateLocation = new Location(location.getWorld(), location.getX(), 72, location.getZ());
-			
-			ItemStorage storage = main.getStorage();
-			storage.saveToStorage(player);
-			
-			if(main.getRaidParties().get(player.getUniqueId()) == null) {
-				main.addRaidParty(player.getUniqueId(), new RaidParty(player));
+	public void perform(Player player, String[] args) {
+		FileConfiguration language = main.getLanguage();
+		
+		if(!raidManager.getCalledRaidCommands().contains(player.getUniqueId())) {
+			RaidParty party = raidManager.getMembersParty(player.getUniqueId());
+			if(party != null && party.getLeader().equals(player.getUniqueId())) {
+				for(UUID uuid : party.getMembers()) {
+					if(Bukkit.getPlayer(uuid) != null) {
+						Player member = Bukkit.getPlayer(uuid);
+						raidManager.addStartPosition(uuid, member.getLocation());
+					}
+				}
+				raidMethods.enterSpectateMode(player);	
+				raidManager.getCalledRaidCommands().add(player.getUniqueId());
+				
 			}
-			
-			RaidParty party = main.getRaidParties().get(player.getUniqueId());
-			main.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "spectate"));
-			for(Player playere : party.getMembers()) {
-				startRaid(playere, spectateLocation);
-				main.getBossBar().get(player.getUniqueId()).addPlayer(playere);
+			else {
+				if(party == null) {
+					raidManager.addStartPosition(player.getUniqueId(), player.getLocation());
+					raidMethods.enterSpectateMode(player);
+				}
+				else {
+					player.sendMessage(raidMethods.format(language.getString("Raid.RaidParty.Raid.NotLeader.Message")));
+				}
 			}
-			
-			OfflinePlayer owner = Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(location));
-			main.getSkyBlock().getIslandManager().loadIsland(owner);
-			startRaid(player, spectateLocation);
-			
 		}
 		else {
-			FileConfiguration language = main.getLanguage();
-			player.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Raid.Error.NotEnoughIslands.Message")));
+			player.sendMessage(raidMethods.format(language.getString("Raid.Error.AlreadyRaiding.Message")));
 		}
+	}
+
+	@Override
+	public List<CommandInterface> getSubCommands() {
+		return null;
 	}
 
 }

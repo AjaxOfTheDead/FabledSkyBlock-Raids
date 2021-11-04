@@ -89,8 +89,6 @@ public final class StructureUtil {
         fileOutputStream.flush();
         fileOutputStream.close();
         
-        System.out.println("saved");
-        
     }
     
     public static HashMap<String, Integer> getRelativePosition(org.bukkit.Location[] positions, org.bukkit.Location originLocation) {
@@ -135,8 +133,6 @@ public final class StructureUtil {
     
     public static ItemStack getSpawnZoneTool() throws Exception {
         Main plugin = Main.getInstance();
-
-        me.ResurrectAjax.Commands.Managers.FileManager fileManager = plugin.getFileManager();
 
         FileConfiguration configLoad = plugin.getLanguage();
 

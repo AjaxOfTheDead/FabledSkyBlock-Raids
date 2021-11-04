@@ -131,7 +131,6 @@ public class InteractListeners implements Listener {
         Player player = event.getPlayer();
         Block block = event.getClickedBlock().getRelative(event.getBlockFace());
 
-        CompatibleMaterial material = CompatibleMaterial.getMaterial(block);
         IslandManager islandManager = plugin.getIslandManager();
         WorldManager worldManager = plugin.getWorldManager();
         IslandLevelManager levellingManager = plugin.getLevellingManager();
@@ -460,7 +459,6 @@ public class InteractListeners implements Listener {
     }
 
 
-    @SuppressWarnings("deprecation")
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         Player player = event.getPlayer();

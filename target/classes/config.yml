@@ -19,6 +19,11 @@ Raid:
     BossBar:
       Color: "RED"
   Raid:
+    PrepareTime: 5
     RaidTime: 300
+    BossBar:
+      Color: "RED"
+  Prepare:
+    PrepareTime: 5
     BossBar:
       Color: "RED"

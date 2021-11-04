@@ -8,8 +8,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 
-import com.songoda.skyblock.SkyBlock;
-
 import me.ResurrectAjax.Main.Main;
 
 public class MysqlMain extends Database{

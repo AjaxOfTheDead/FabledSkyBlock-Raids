@@ -1,21 +1,8 @@
 package me.ResurrectAjax.Listeners;
 
-import com.songoda.core.compatibility.CompatibleSound;
-import com.songoda.core.compatibility.ServerVersion;
-import com.songoda.skyblock.SkyBlock;
-import com.songoda.skyblock.config.FileManager;
-import com.songoda.skyblock.config.FileManager.Config;
-import com.songoda.skyblock.island.*;
-import com.songoda.skyblock.message.MessageManager;
-import com.songoda.skyblock.permission.PermissionManager;
-import com.songoda.skyblock.playerdata.PlayerData;
-import com.songoda.skyblock.playerdata.PlayerDataManager;
-import com.songoda.skyblock.sound.SoundManager;
-import com.songoda.skyblock.utils.world.LocationUtil;
-import com.songoda.skyblock.world.WorldManager;
-import io.papermc.lib.PaperLib;
+import java.util.Objects;
+
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
@@ -28,15 +15,35 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.potion.PotionEffect;
 
-import java.io.File;
-import java.util.Objects;
+import com.songoda.core.compatibility.CompatibleSound;
+import com.songoda.core.compatibility.ServerVersion;
+import com.songoda.skyblock.SkyBlock;
+import com.songoda.skyblock.island.Island;
+import com.songoda.skyblock.island.IslandEnvironment;
+import com.songoda.skyblock.island.IslandManager;
+import com.songoda.skyblock.island.IslandRole;
+import com.songoda.skyblock.island.IslandStatus;
+import com.songoda.skyblock.island.IslandWorld;
+import com.songoda.skyblock.message.MessageManager;
+import com.songoda.skyblock.permission.PermissionManager;
+import com.songoda.skyblock.playerdata.PlayerData;
+import com.songoda.skyblock.playerdata.PlayerDataManager;
+import com.songoda.skyblock.sound.SoundManager;
+import com.songoda.skyblock.utils.world.LocationUtil;
+import com.songoda.skyblock.world.WorldManager;
+
+import io.papermc.lib.PaperLib;
+import me.ResurrectAjax.Main.Main;
+import me.ResurrectAjax.Raid.RaidMethods;
 
 public class MoveListeners implements Listener {
 
     private final SkyBlock plugin;
-
+    private RaidMethods methods;
+    
     public MoveListeners(SkyBlock plugin) {
         this.plugin = plugin;
+        methods = Main.getInstance().getRaidMethods();
     }
     
     @EventHandler
@@ -146,7 +153,7 @@ public class MoveListeners implements Listener {
                         }
                     } else {
                         if(!islandManager.isLocationAtIsland(island, to)) {
-                            teleportPlayerToIslandSpawn(player, world, island);
+                        	event.setCancelled(true);
                             FileConfiguration configLoad = plugin.getConfiguration();
 
 
@@ -231,8 +238,21 @@ public class MoveListeners implements Listener {
         if(finalLoc != null){
             PaperLib.teleportAsync(player, finalLoc);
         } else {
-            LocationUtil.teleportPlayerToSpawn(player);
-            player.sendMessage(plugin.formatText(plugin.getLanguage().getString("Command.Island.Teleport.Unsafe.Message")));
+        	MessageManager messageManager = plugin.getMessageManager();
+        	SoundManager soundManager = plugin.getSoundManager();
+        	if(methods.getIslandRaider().containsKey(player.getUniqueId()) || methods.getIslandSpectator().containsKey(player.getUniqueId())) {
+        		Location location = methods.getIslandRaider().get(player.getUniqueId()) != null ? methods.getIslandRaider().get(player.getUniqueId()) : methods.getIslandSpectator().get(player.getUniqueId());
+        		Location newLoc = new Location(location.getWorld(), location.getBlockX(), 72, location.getZ());
+        		player.teleport(newLoc);
+        		
+        		messageManager.sendMessage(player, plugin.getLanguage()
+                        .getString("Island.WorldBorder.Outside.Message"));
+                soundManager.playSound(player, CompatibleSound.ENTITY_ENDERMAN_TELEPORT.getSound(), 1.0F, 1.0F);
+        	}
+        	else {
+                LocationUtil.teleportPlayerToSpawn(player);
+                player.sendMessage(plugin.formatText(plugin.getLanguage().getString("Command.Island.Teleport.Unsafe.Message")));	
+        	}
         }
     }
 

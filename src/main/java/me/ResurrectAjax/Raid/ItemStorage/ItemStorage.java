@@ -29,6 +29,13 @@ public class ItemStorage {
 		inventory.put(player.getUniqueId(), player.getInventory().getStorageContents());
 		armor.put(player.getUniqueId(), player.getInventory().getArmorContents());
 		player.getInventory().clear();
+		
+		if(main.getRaidManager().getLeaders().contains(player.getUniqueId())) {
+			addSpectateTools(player);
+		}
+	}
+	
+	public void addSpectateTools(Player player) {
 		exit = new ItemStack(Material.valueOf(main.getConfiguration().getString("Raid.RaidFinder.Menu.Exit.Item")));
 		raid = new ItemStack(Material.valueOf(main.getConfiguration().getString("Raid.RaidFinder.Menu.Raid.Item")));
 		next = new ItemStack(Material.valueOf(main.getConfiguration().getString("Raid.RaidFinder.Menu.Next.Item")));
@@ -64,8 +71,6 @@ public class ItemStorage {
 		player.getInventory().setItem(main.getConfiguration().getInt("Raid.RaidFinder.Menu.Exit.ItemSlot"), exit);
 		player.getInventory().setItem(main.getConfiguration().getInt("Raid.RaidFinder.Menu.Raid.ItemSlot"), raid);
 		player.getInventory().setItem(main.getConfiguration().getInt("Raid.RaidFinder.Menu.Next.ItemSlot"), next);
-		
-		
 	}
 	
 	public static ItemStack getExitItem() {

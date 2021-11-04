@@ -113,7 +113,9 @@ public class FastDataAccess {
 	public UUID getOwnerByLocation(Location location) {
 		UUID owner = null;
 		for(UUID uuid : spawnPositions.keySet()) {
-			if(spawnPositions.get(uuid) == location) {
+			Location uuidPos = new Location(spawnPositions.get(uuid).getWorld(), spawnPositions.get(uuid).getX(), 0, spawnPositions.get(uuid).getZ()), 
+					ownerPos = new Location(location.getWorld(), location.getX(), 0, location.getZ());
+			if(uuidPos.equals(ownerPos)) {
 				owner = uuid;
 			}
 		}

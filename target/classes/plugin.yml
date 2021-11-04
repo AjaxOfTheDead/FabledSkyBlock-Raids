@@ -8,5 +8,8 @@ api-version: 1.17
 
 commands:
   Raid:
-    description: get the commands
+    description: Raid an island
+    usage: /<command>
+  RaidParty:
+    description: Open the RaidParty GUI
     usage: /<command>

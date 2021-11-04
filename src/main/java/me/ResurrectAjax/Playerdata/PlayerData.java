@@ -313,7 +313,7 @@ public class PlayerData {
         configLoad.set("ChatSpy", chatSpy);
         List<String> tempSpiedIslands = new ArrayList<>();
         for(UUID uuid : spiedIslands){
-            tempSpiedIslands.add(FastUUID.toString(uuid));
+            tempSpiedIslands.add(uuid.toString());
         }
         configLoad.set("ChatSpiedIslands", tempSpiedIslands);
         
@@ -326,7 +326,7 @@ public class PlayerData {
 
     private Config getConfig() {
         SkyBlock plugin = SkyBlock.getInstance();
-        return plugin.getFileManager().getConfig(new File(new File(plugin.getDataFolder().toString() + "/player-data"), FastUUID.toString(uuid) + ".yml"));
+        return plugin.getFileManager().getConfig(new File(new File(plugin.getDataFolder().toString() + "/player-data"), uuid.toString() + ".yml"));
     }
     
     public Player getPlayer() {
