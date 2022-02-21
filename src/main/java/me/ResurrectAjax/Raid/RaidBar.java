@@ -12,11 +12,11 @@ import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
-import com.songoda.skyblock.island.Island;
 import com.songoda.skyblock.island.IslandManager;
 import com.songoda.skyblock.island.IslandRole;
 import com.songoda.skyblock.sound.SoundManager;
 
+import me.ResurrectAjax.Commands.Raid.RaidEnd;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Mysql.FastDataAccess;
 import net.md_5.bungee.api.ChatColor;
@@ -53,17 +53,11 @@ public class RaidBar {
 	}
 	
 	public void createBar(String type) {
-		if(type.equalsIgnoreCase("spectate")) {
-			title = language.getString("Raid.RaidFinder.BossBar.Title");
-			color = configLoad.getString("Raid.RaidFinder.BossBar.Color");
-		}
-		else if(type.equalsIgnoreCase("raid")) {
-			title = language.getString("Raid.Raid.BossBar.Title");
-			color = configLoad.getString("Raid.Raid.BossBar.Color");
-		}
-		else if(type.equalsIgnoreCase("prepare")) {
-			title = language.getString("Raid.Prepare.BossBar.Title");
-			color = configLoad.getString("Raid.Prepare.BossBar.Color");
+		for(String section : language.getConfigurationSection("Raid").getKeys(false)) {
+			if(section.equalsIgnoreCase(type)) {
+				title = language.getString("Raid." + section + ".BossBar.Title");
+				color = configLoad.getString("Raid." + section + ".BossBar.Color");
+			}
 		}
 		bar = Bukkit.createBossBar(format(title), BarColor.valueOf(color), BarStyle.SOLID);
 		bar.setVisible(true);
@@ -72,7 +66,7 @@ public class RaidBar {
 	}
 	
 	public void cast(String type) {
-		if(type.equalsIgnoreCase("spectate")) {
+		if(type.equalsIgnoreCase("raidfinder")) {
 			taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(main, new Runnable() {
 				
 				double progress = 1.0;
@@ -86,18 +80,18 @@ public class RaidBar {
 					
 					progress = progress - time;
 					if(title.contains("%TimeLeft%")) {
-						String newstr;
 						totalTime = (int) Math.round(progress*configTime);
-						newstr = title.replaceAll("%TimeLeft%", Integer.toString(totalTime));
-						bar.setTitle(format(newstr));
+						String formatTitle = RaidMethods.format(title, totalTime + "");
+						bar.setTitle(formatTitle);
 					}
 					if(progress <= 0) {
 						Bukkit.getScheduler().cancelTask(taskID);
 						for(Player player : bar.getPlayers()) {
 							Location enemy = raidMethods.getIslandSpectator().get(player.getUniqueId());
-							if(!raidMethods.getIslands().contains(enemy)) {
-								raidMethods.getIslands().add(enemy);	
+							if(raidMethods.getSpectatedIslands().contains(enemy)) {
+								raidMethods.getSpectatedIslands().remove(enemy);	
 							}
+							raidManager.getStartPositions().get(player.getUniqueId()).getWorld().getChunkAt(raidManager.getStartPositions().get(player.getUniqueId())).load();
 							player.teleport(raidManager.getStartPositions().get(player.getUniqueId()));
 							raidMethods.exitRaidSpectator(player);
 							main.getStorage().restoreItems(Bukkit.getPlayer(player.getUniqueId()));
@@ -124,21 +118,22 @@ public class RaidBar {
 					
 					progress = progress - time;
 					if(title.contains("%TimeLeft%")) {
-						String newstr;
 						totalTime = (int) Math.round(progress*configTime);
-						newstr = title.replaceAll("%TimeLeft%", Integer.toString(totalTime));
-						bar.setTitle(format(newstr));
+						String formatTitle = RaidMethods.format(title, totalTime + "");
+						bar.setTitle(formatTitle);
 					}
 					if(progress <= 0) {
 						Bukkit.getScheduler().cancelTask(taskID);
 						for(Player player : bar.getPlayers()) {
-							player.teleport(raidManager.getStartPositions().get(player.getUniqueId()));
+							if(raidManager.getStartPositions().get(player.getUniqueId()) != null) {
+								player.teleport(raidManager.getStartPositions().get(player.getUniqueId()));	
+							}
 							if(raidMethods.getIslandRaider().containsKey(player.getUniqueId())) {
-								raidMethods.removeRaider(player.getUniqueId());
 								raidManager.getCalledRaidCommands().remove(player.getUniqueId());
 							}
 						}
-						raidMethods.checkLeader(raidManager.getMembersParty(player).getOnlineMembers().get(0));
+						RaidEnd.endRaid(player);
+						raidMethods.checkLeader(main.getRaidManager().getMembersParty(player).getOnlineMembers().get(0));
 						bar.removeAll();
 						cancelTask();
 					}
@@ -160,14 +155,13 @@ public class RaidBar {
 				
 				@Override
 				public void run() {
+					totalTime = (int) Math.round(progress*configTime);
 					if(title.contains("%TimeLeft%")) {
-						String newstr;
-						totalTime = (int) Math.round(progress*configTime);
-						newstr = title.replaceAll("%TimeLeft%", Integer.toString(totalTime));
-						bar.setTitle(format(newstr));
+						String formatTitle = RaidMethods.format(title, totalTime + "");
+						bar.setTitle(formatTitle);
 						
-						String title = language.getString("Raid.PrepareTime.PrepareTitles.Title"), subtitle = language.getString("Raid.PrepareTime.PrepareTitles.Subtitle")
-								, actionbar = language.getString("Raid.PrepareTime.PrepareTitles.Actionbar");
+						String title = language.getString("Raid.Prepare.PrepareTitles.Title"), subtitle = language.getString("Raid.Prepare.PrepareTitles.Subtitle")
+								, actionbar = language.getString("Raid.Prepare.PrepareTitles.Actionbar");
 						for(UUID uuid : raidManager.getMembersParty(player).getMembers()) {
 							
 							if(Bukkit.getPlayer(uuid) != null && totalTime > 0) {
@@ -181,27 +175,31 @@ public class RaidBar {
 							}
 						}
 						
-						
-						Location tempIsland = raidMethods.getIslandSpectator().get(player);
-						
-						OfflinePlayer owner = Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(tempIsland));
-						islandManager.loadIsland(owner);
-						
-						for(IslandRole ir : IslandRole.getRoles()) {
-							for(UUID member : islandManager.getIslandByOwner(owner).getRole(ir)) {
-								if(Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(member))) {
-									bar.addPlayer(Bukkit.getPlayer(member));
-									if(totalTime >= configTime) {
-										new RaidTitles(title, subtitle, actionbar, Bukkit.getPlayer(member), totalTime, main);	
-										soundManager.playSound(Bukkit.getPlayer(member), Sound.EVENT_RAID_HORN, 100.0F, 100.0F);
+						if(totalTime >= configTime) {
+							Location tempIsland = raidMethods.getIslandSpectator().get(player);
+							
+							OfflinePlayer owner = Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(tempIsland));
+							islandManager.loadIsland(owner);
+							
+							for(IslandRole ir : IslandRole.getRoles()) {
+								for(UUID member : islandManager.getIslandByOwner(owner).getRole(ir)) {
+									if(Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(member))) {
+										bar.addPlayer(Bukkit.getPlayer(member));
+										if(totalTime >= configTime) {
+											new RaidTitles(title, subtitle, actionbar, Bukkit.getPlayer(member), totalTime, main);	
+											soundManager.playSound(Bukkit.getPlayer(member), Sound.EVENT_RAID_HORN, 100.0F, 100.0F);
+										}
 									}
 								}
-							}
+							}	
 						}
 					}
 					if(progress < 0) {
 						bar.removeAll();
-						raidMethods.raidIslandFromSpectator(Bukkit.getPlayer(player));
+						if(raidMethods.getIslandSpectator().containsKey(player)) {
+							raidMethods.raidIslandFromSpectator(Bukkit.getPlayer(player));
+							
+						}
 						cancelTask();
 					}
 					else {

@@ -3,6 +3,7 @@ package me.ResurrectAjax.Main;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -11,6 +12,7 @@ import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 import me.ResurrectAjax.Commands.Managers.CommandManager;
+import me.ResurrectAjax.Raid.RaidMethods;
 
 public class TabCompletion implements TabCompleter{
 	private CommandManager commandManager;
@@ -20,12 +22,18 @@ public class TabCompletion implements TabCompleter{
 	
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+		
 		List<String> tabCommands = new ArrayList<String>();
 		if(sender instanceof Player) {
-			for(CommandInterface commands : commandManager.getCommands()) {
+			UUID uuid = ((Player) sender).getUniqueId();
+
+			if(commandManager.getStringList().contains(command.getName().toLowerCase())) {
+				CommandInterface commands = commandManager.getCommandByName(command.getName());
 				switch(args.length) {
 					case 1:
-						tabCommands.addAll(Arrays.asList(commands.getArguments()));
+						if(commands.getArguments(uuid) != null) {
+							tabCommands.addAll(Arrays.asList(commands.getArguments(uuid)));	
+						}
 						break;
 					case 2:
 					case 3:
@@ -33,21 +41,29 @@ public class TabCompletion implements TabCompleter{
 							for(CommandInterface subcommands : commands.getSubCommands()) {
 								for(int i = 0; i < args.length; i++) {
 									if(subcommands.getName().equalsIgnoreCase(args[i])) {
-										if(subcommands.getArguments() != null) {
-											tabCommands.addAll(Arrays.asList(subcommands.getArguments()));	
+										if(subcommands.getArguments(uuid) != null) {
+											tabCommands.addAll(Arrays.asList(subcommands.getArguments(uuid)));	
 										}
 									}
 								}
 							}	
 						}
 						else {
-							tabCommands.addAll(Arrays.asList(commands.getArguments()));
+							if(commands.getArguments(uuid) != null) {
+								tabCommands.addAll(Arrays.asList(commands.getArguments(uuid)));	
+							}
 						}
 						break;
 				}
 			}
+			
+		}
+		
+		for(String commands : RaidMethods.getBlackListCommands()) {
+			if(tabCommands.contains(commands)) {
+				tabCommands.remove(commands);
+			}
 		}
 		return tabCommands;
 	}
-
 }

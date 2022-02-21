@@ -5,6 +5,10 @@ Island:
       SpawnZoneSelector: "GOLDEN_AXE"
 Raid:
   RaidFinder:
+    # Menu: items given when spectating islands
+    # ScoutTime: amount of seconds a player can scount an island for
+    # BossBar: color of the BossBar
+    # RaidSensePrice: amount of RaidSense an island must pay to scout an island
     Menu:
       Exit:
         Item: 'RED_BED'
@@ -18,12 +22,59 @@ Raid:
     ScoutTime: 30
     BossBar:
       Color: "RED"
+    RaidSensePrice: 200.0
   Raid:
-    PrepareTime: 5
+    # RaidTime: amount of seconds the raid will last
+    # BossBar: color of the Bossbar
     RaidTime: 300
     BossBar:
       Color: "RED"
   Prepare:
+    # PrepareTime: amount of seconds before the raid starts
+    # BossBar: color of the Bossbar
     PrepareTime: 5
     BossBar:
       Color: "RED"
+  RaidSense:
+    # StartAmount: amount of RaidSense each island will start off with
+    # ScheduledTasks: Run task every x amount of seconds/minutes/hours
+    StartAmount: 1000.0
+    ScheduledTasks:
+      # Enabled: set to 'false' to disable
+      # AddRaidSense: adds a certain amount of RaidSense to island balance every x amount of time islandmembers are online
+      # Interval time format: h = hours, m = minutes, s = seconds (for example: 1 hour, 1 minute and 1 second => 1h1m1s)
+      Enabled: true
+      AddRaidSense:
+        Interval: 10s
+        RaidSense: 50
+    SenseMultipliers:
+      10:
+        PotionEffects:
+          STRENGTH:
+            Amplifier: 2
+            Duration: 100s
+          SPEED:
+            Amplifier: 3
+            Duration: 100s
+      20:
+        PotionEffects:
+          STRENGTH:
+            Amplifier: 2
+            Duration: 200s
+      30:
+        PotionEffects:
+          STRENGTH:
+            Amplifier: 2
+            Duration: 300s
+      40:
+        PotionEffects:
+          STRENGTH:
+            Amplifier: 2
+            Duration: 400s
+Database:
+  # RemoveData, set to 'false' to disable (Not recommended)
+  # Will remove the history of a raid that happened over x amount of days ago (to reduce the possibility of lag / execute on reload)
+  # RemoveAfter time format: d = days, w = weeks, M = months
+  RemoveData:
+    Enabled: true
+    RemoveAfter: 10d

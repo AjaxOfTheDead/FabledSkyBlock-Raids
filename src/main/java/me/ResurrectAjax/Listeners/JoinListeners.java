@@ -25,6 +25,7 @@ import com.songoda.skyblock.utils.world.LocationUtil;
 import io.papermc.lib.PaperLib;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Playerdata.PlayerDataManager;
+import me.ResurrectAjax.Playerdata.PlayerManager;
 
 public class JoinListeners implements Listener {
 
@@ -45,13 +46,14 @@ public class JoinListeners implements Listener {
         IslandManager islandManager = plugin.getIslandManager();
         
         Player player = event.getPlayer();
+        
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             userCacheManager.addUser(player.getUniqueId(), player.getName());
             userCacheManager.saveAsync();
         
             try {
                 islandManager.loadIsland(player);
-                Island island = islandManager.getIsland(player);
+                Island island = PlayerManager.getPlayersIsland(player.getUniqueId());
                 boolean teleportedToIsland = false;
 
                 FileConfiguration configLoad = plugin.getConfiguration();

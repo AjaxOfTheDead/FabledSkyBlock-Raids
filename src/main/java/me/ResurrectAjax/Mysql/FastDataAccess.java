@@ -7,15 +7,28 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import me.ResurrectAjax.Main.Main;
+import me.ResurrectAjax.Playerdata.PlayerManager;
+import me.ResurrectAjax.RaidSense.RaidSenseTime;
+
 public class FastDataAccess {
 	private Database db;
+	private final Main main;
 	
 	private HashMap<UUID, Location[]> spawnZones;
 	private HashMap<UUID, Location> spawnPositions;
 	private HashMap<String, HashMap<String, Integer>> structures;
 	
-	public FastDataAccess(Database db) {
+	private HashMap<UUID, Double> raidSense = new HashMap<UUID, Double>();
+	private HashMap<UUID, Integer> islandTime = new HashMap<UUID, Integer>();
+	
+	public FastDataAccess(Database db, Main main) {
 		this.db = db;
+		this.main = main;
+		putAllSpawnZones();
+		putAllStructures();
+		loadAllRaidSense();
+		loadAllIslandTime();
 	}
 	
 	public void putAllSpawnZones() {
@@ -127,11 +140,85 @@ public class FastDataAccess {
 		spawnPositions.remove(uuid);
 	}
 	
+	public void loadAllRaidSense() {
+		raidSense = db.getAllRaidSense();
+	}
+	
 	public HashMap<String, HashMap<String, Integer>> getStructures() {
 		return structures;
 	}
 	
 	public HashMap<UUID, Location[]> getSpawnZones() {
 		return spawnZones;
+	}
+	
+	public HashMap<UUID, Double> getAllRaidSense() {
+		return raidSense;
+	}
+	
+	public void addIsland(UUID uuid, double sense) {
+		RaidSenseTime raidSenseTime = main.getIslandTime();
+		
+		db.setIsland(uuid.toString(), sense);
+		islandTime.put(uuid, 0);
+		raidSenseTime.putPlayerLogTime(uuid);
+		putRaidSense(uuid, sense);
+		
+	}
+	
+	public void putIslandTime(UUID uuid, Integer time) {
+		islandTime.put(uuid, time);
+	}
+	
+	public void saveIslandTimeToDatabase(UUID uuid) {
+		UUID owner = PlayerManager.getPlayersIsland(uuid).getOwnerUUID();
+		db.updateIslandTime(owner, islandTime.get(owner));
+	}
+	
+	public void removeIsland(UUID uuid) {
+		islandTime.remove(uuid);
+		raidSense.remove(uuid);
+		db.deleteIsland(uuid);
+	}
+	
+	public void loadAllIslandTime() {
+		islandTime = db.getAllIslandTime();
+	}
+	
+	public Integer getIslandTime(UUID uuid) {
+		Integer time = null;
+		if(islandTime != null && islandTime.containsKey(uuid)) {
+			time = islandTime.get(uuid);
+		}
+		return time;
+	}
+	
+	public HashMap<UUID, Integer> getAllIslandTime() {
+		return islandTime;
+	}
+	
+	public Double getRaidSense(UUID uuid) {
+		return raidSense.get(uuid);
+	}
+	
+	public void saveRaidSenseToDatabase(UUID uuid, Double sense) {
+		db.updateRaidSense(uuid, sense);
+	}
+	
+	public void putRaidSense(UUID uuid, Double sense) {
+		raidSense.put(uuid, sense);
+	}
+	
+	public void updateIslandOwner(UUID oldOwner, UUID newOwner) {
+		Double sense = raidSense.get(oldOwner);
+		Integer time = islandTime.get(oldOwner);
+		
+		raidSense.remove(oldOwner);
+		islandTime.remove(oldOwner);
+		
+		raidSense.put(newOwner, sense);
+		islandTime.put(newOwner, time);
+		
+		db.updateOwnership(oldOwner.toString(), newOwner.toString());
 	}
 }

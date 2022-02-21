@@ -8,8 +8,6 @@ import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import com.songoda.skyblock.island.Island;
-
 import me.ResurrectAjax.Main.Main;
 
 public class RaidManager {
@@ -17,8 +15,6 @@ public class RaidManager {
 	private HashMap<UUID, RaidBar> raidBars = new HashMap<UUID, RaidBar>();
 	private HashMap<UUID, List<UUID>> partyInvites = new HashMap<UUID, List<UUID>>();
 	private HashMap<UUID, Location> startPositions = new HashMap<UUID, Location>();
-	
-	private HashMap<Island, List<UUID>> deadIslandMembers = new HashMap<Island, List<UUID>>();
 	
 	private List<UUID> raidCommandsList = new ArrayList<UUID>();
     
@@ -65,7 +61,7 @@ public class RaidManager {
     
     public void setLeader(Player player, RaidParty party) {
     	raidParty.remove(party.getLeader());
-    	party.setLeader(player);
+    	party.setLeader(player.getUniqueId());
     	raidParty.put(player.getUniqueId(), party);
     }
     

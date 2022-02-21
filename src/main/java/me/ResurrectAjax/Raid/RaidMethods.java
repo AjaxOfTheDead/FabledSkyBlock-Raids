@@ -1,6 +1,9 @@
 package me.ResurrectAjax.Raid;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -8,19 +11,31 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionType;
 
-import com.songoda.skyblock.island.IslandEnvironment;
+import com.songoda.skyblock.island.Island;
 import com.songoda.skyblock.island.IslandManager;
 import com.songoda.skyblock.island.IslandRole;
-import com.songoda.skyblock.island.IslandWorld;
 
+import me.ResurrectAjax.Commands.Raid.RaidEnd;
+import me.ResurrectAjax.Commands.RaidHistory.SpecificHistory;
+import me.ResurrectAjax.Commands.RaidHistory.StolenItems;
+import me.ResurrectAjax.Commands.RaidParty.RaidPartyAccept;
+import me.ResurrectAjax.Commands.RaidParty.RaidPartyCancelInvite;
+import me.ResurrectAjax.Commands.RaidParty.RaidPartyDeny;
+import me.ResurrectAjax.Commands.RaidParty.RaidPartyExitGUI;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Mysql.FastDataAccess;
+import me.ResurrectAjax.Playerdata.PlayerManager;
 import me.ResurrectAjax.Raid.ItemStorage.ItemStorage;
+import me.ResurrectAjax.RaidSense.RaidSenseTime;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -28,18 +43,35 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 
 public class RaidMethods {
+	
 	private Main main;
 	private RaidManager raidManager;
 	private IslandManager islandManager;
-	private FileConfiguration language;
+	private FileConfiguration language, configLoad;
 	private Location spawnLocation;
 	private Random rand = new Random();
 	private FastDataAccess fdb;
+	ItemStorage storage;
 	private HashMap<UUID, Location> islandRaider = new HashMap<UUID, Location>();
 	private HashMap<UUID, Location> islandSpectator = new HashMap<UUID, Location>();
 	private HashMap<Location, UUID> raidedIsland = new HashMap<Location, UUID>();
+	private HashMap<UUID, Integer> currentRaid = new HashMap<UUID, Integer>();
 	
-	private List<Location> islands;
+	private List<Location> spectatedIslands = new ArrayList<Location>();
+	
+	public static List<Material> CONTAINERTYPES = new ArrayList<Material>(Arrays.asList(
+			Material.BARREL,
+			Material.BLAST_FURNACE,
+			Material.BREWING_STAND,
+			Material.CHEST,
+			Material.TRAPPED_CHEST,
+			Material.DISPENSER,
+			Material.DROPPER,
+			Material.FURNACE,
+			Material.HOPPER,
+			Material.SHULKER_BOX,
+			Material.SMOKER
+			));
 	
 	public RaidMethods(Main main) {
 		this.main = main;
@@ -48,20 +80,41 @@ public class RaidMethods {
 		this.raidManager = main.getRaidManager();
 		this.islandManager = main.getSkyBlock().getIslandManager();
 		
-		//load all island positions in the database
-		HashMap<UUID, Location> positions = main.getIslandPositions();
-		islands = new ArrayList<Location>();
-		for(UUID uuid : positions.keySet()) {
-			islands.add(positions.get(uuid));
-		}
 		//get fast data access
 		fdb = main.getFastDataAccess();
 		
 		//get the contents of language.yml
 		language = main.getLanguage();
+		configLoad = main.getConfiguration();
 		
 		//load spawn
 		spawnLocation = main.getSpawnLocation();
+		
+		storage = main.getStorage();
+	}
+	
+	public List<Location> getSpectatedIslands() {
+		return spectatedIslands;
+	}
+	
+	//replace the "%Syntax%" in the language.yml file
+	public static String convertSyntax(String syntax) {
+		FileConfiguration configLoad = Main.getInstance().getLanguage();
+		String syntaxMsg = configLoad.getString("Command.Execute.BadSyntax.Message");
+		String newstr = syntaxMsg;
+		
+		if(newstr.contains("%Syntax%")) {
+			newstr = syntaxMsg.replace("%Syntax%", syntax + "");
+		}
+		return newstr;
+	}
+	
+	public Integer getCurrentRaid(UUID uuid) {
+		return currentRaid.get(uuid);
+	}
+	
+	public void setCurrentRaid(UUID uuid, Integer id) {
+		currentRaid.put(uuid, id);
 	}
 	
 	//exit spectator mode
@@ -82,10 +135,6 @@ public class RaidMethods {
 						raidManager.getBossBar().get(partyLeader.getUniqueId()).getBar().removePlayer(members);
 						
 						members.getInventory().clear();
-						
-						for(Player players : Bukkit.getOnlinePlayers()) {
-							players.showPlayer(main, members);
-						}
 					}	
 				}
 			}
@@ -107,14 +156,7 @@ public class RaidMethods {
 	}
 	
 	//pick a random island to spectate
-	public Location pickIsland(UUID puuid) {
-		for(Location is : islands) {
-			if(is.getBlockY() == 72) {
-				islands.remove(is);
-				Location newloc = new Location(is.getWorld(), is.getX(), 0, is.getZ());
-				islands.add(newloc);
-			}
-		}
+	public Location pickIsland(UUID puuid, List<Location> islands) {
 		List<Location> islandsNew = new ArrayList<Location>(islands);
 		int chosen;
 		
@@ -122,29 +164,41 @@ public class RaidMethods {
 		
 		chosen = rand.nextInt(islandsNew.size());
 		
-		islands.remove(islandsNew.get(chosen));
+		if(spectatedIslands.contains(islandsNew.get(chosen))) {
+			islandsNew.remove(chosen);
+			pickIsland(puuid, islandsNew);
+		}
+		else {
+			spectatedIslands.add(islandsNew.get(chosen));
+		}
 		
 		
 		return islandsNew.get(chosen);
 		
 	}
 	
+	public boolean isValidDate(String date) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        dateFormat.setLenient(false);
+        try {
+            dateFormat.parse(ChatColor.stripColor(date).trim());
+        } catch (ParseException pe) {
+            return false;
+        }
+        return true;
+	}
+	
 	public void checkLeader(UUID player) {
-		if(Bukkit.getPlayer(raidManager.getMembersParty(player).getLeader()) != null) {
+		if(Bukkit.getPlayer(raidManager.getMembersParty(player).getLeader()) == null) {
 			
-			Player leader = Bukkit.getPlayer(raidManager.getMembersParty(player).getLeader());
-			RaidParty party = raidManager.getRaidParties().get(leader.getUniqueId());
-			List<Player> members = new ArrayList<Player>();
+			RaidParty party = raidManager.getMembersParty(player);
 			
-			for(UUID member : party.getMembers()) {
-				
-				if(!member.equals(player)) {
-					if(Bukkit.getPlayer(member) != null) {
-						members.add(Bukkit.getPlayer(member));	
-					}
+			for(int i = 0; i < party.getMembers().size(); i++) {
+				if(Bukkit.getPlayer(party.getMembers().get(i)) != null) {
+					party.setLeader(party.getMembers().get(i));
+					break;
 				}
 			}
-			raidManager.setLeader(Bukkit.getPlayer(player), party);
 			
 		}
 		if(raidManager.getMembersParty(player).getMembers().size() == 1) {
@@ -177,7 +231,7 @@ public class RaidMethods {
 	//add a raider to the list using the raidLeader
 	public void addRaider(UUID uuid, UUID raidStarter) {
 		islandRaider.put(uuid, islandRaider.get(raidStarter));
-		raidManager.getRaidParties().get(raidStarter).addMember(Bukkit.getPlayer(uuid));
+		raidManager.getRaidParties().get(raidStarter).addMember(uuid);
 	}
 	
 	//add a raider to the list
@@ -189,7 +243,7 @@ public class RaidMethods {
 	}
 	
 	
-	public void startRaid(Player player, Location spectateLocation, RaidParty party) {
+	public void startSpectating(Player player, Location spectateLocation, RaidParty party) {
 		//check if any player in online players is equal to this player or is a member of this player's party
 		for(Player players : Bukkit.getOnlinePlayers()) {
 			if(players != player && !party.getMembers().contains(players.getUniqueId())) {
@@ -197,12 +251,16 @@ public class RaidMethods {
 			}
 		}
 		player.setInvulnerable(true);
+		
+		IslandManager islandManager = main.getSkyBlock().getIslandManager();
+		islandManager.loadIslandAtLocation(spectateLocation);
 		player.teleport(spectateLocation);
 		player.setAllowFlight(true);
 		
+		
 	}
 	
-	public boolean isInteger(String nmrStr) {
+	public static boolean isInteger(String nmrStr) {
 		try {
 			Integer.parseInt(nmrStr);
 		}
@@ -212,80 +270,84 @@ public class RaidMethods {
 		return true;
 	}
 	
+	public static Integer getIntFromString(String str) {
+		String nStr = ChatColor.stripColor(str);
+		return Integer.parseInt(nStr.replaceAll("[\\D]", ""));
+	}
+	
 	public void enterSpectateMode(Player player) {
+		
 		//check if there are other islands
 		if(main.getIslandPositions().size() > 1) {
-			Location location =  pickIsland(player.getUniqueId());
-			Location spectateLocation = new Location(location.getWorld(), location.getX(), 72, location.getZ());
+			UUID raiderOwner = PlayerManager.getPlayersIsland(player.getUniqueId()).getOwnerUUID();
 			
-			FileConfiguration language = main.getLanguage();
-			
-			ItemStorage storage = main.getStorage();
-			
-			//create party if the player doesn't gave one
-			HashMap<UUID, RaidParty> parties = raidManager.getRaidParties();
+			if(fdb.getRaidSense(raiderOwner) >= configLoad.getDouble("Raid.RaidFinder.RaidSensePrice")) {
+				fdb.putRaidSense(raiderOwner, fdb.getRaidSense(raiderOwner) - configLoad.getDouble("Raid.RaidFinder.RaidSensePrice"));
+				
+				Location location =  pickIsland(raiderOwner, getIslands());
+				Location spectateLocation = new Location(location.getWorld(), location.getX(), 72, location.getZ());
+				
+				//create party if the player doesn't gave one
+				HashMap<UUID, RaidParty> parties = raidManager.getRaidParties();
 
-			RaidParty party = null;
-			RaidBar bar = null;
-			//check partylists size
-			if(parties.keySet().size() >= 1) {
-				if(raidManager.getMembersParty(player.getUniqueId()) == null) {
+				RaidParty party = null;
+				RaidBar bar = null;
+				
+				//check partylists size
+				if(parties.keySet().size() >= 1) {
+					if(raidManager.getMembersParty(player.getUniqueId()) == null) {
+						//create party if not exist
+						raidManager.addRaidParty(player.getUniqueId(), new RaidParty(player));	
+						
+						party = raidManager.getRaidParties().get(player.getUniqueId());
+						bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "raidfinder"));
+					}
+					else {
+						party = raidManager.getMembersParty(player.getUniqueId());
+						
+						if(party.getLeader().equals(player.getUniqueId())) {
+							bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "raidfinder"));
+						}
+					}				
+				}
+				else {
 					//create party if not exist
 					raidManager.addRaidParty(player.getUniqueId(), new RaidParty(player));	
 					
-					party = raidManager.getRaidParties().get(player.getUniqueId());
-					bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "spectate"));
-				}
-				else {
 					party = raidManager.getMembersParty(player.getUniqueId());
-					
-					if(party.getLeader().equals(player.getUniqueId())) {
-						bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "spectate"));
+					bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "raidfinder"));
+				}
+				
+				String title = language.getString("Raid.RaidFinder.RaidFinderTitles.Title"), subtitle = language.getString("Raid.RaidFinder.RaidFinderTitles.Subtitle")
+						, actionbar = language.getString("Raid.RaidFinder.RaidFinderTitles.Actionbar");
+				
+				OfflinePlayer owner = Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(new Location(location.getWorld(), location.getX(), 0, location.getZ())));
+				main.getSkyBlock().getIslandManager().loadIsland(owner);
+				for(UUID uuid : party.getMembers()) {
+					if(Bukkit.getPlayer(uuid) != null) {
+						Player players = Bukkit.getPlayer(uuid);
+						islandSpectator.put(players.getUniqueId(), location);
+						
+						storage.saveToStorage(players);
+						startSpectating(players, spectateLocation, party);
+						bar.addPlayer(players);
+						
+						new RaidTitles(title, subtitle, actionbar, players, null, main);
 					}
-				}				
+
+				}
 			}
 			else {
-				//create party if not exist
-				raidManager.addRaidParty(player.getUniqueId(), new RaidParty(player));	
-				
-				party = raidManager.getRaidParties().get(player.getUniqueId());
-				bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "spectate"));
+				cancelRaid(player);
+				player.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Raid.RaidFinder.Error.InsufficientFunds.Message")));
 			}
 			
-			String title = language.getString("Raid.RaidFinder.RaidFinderTitles.Title"), subtitle = language.getString("Raid.RaidFinder.RaidFinderTitles.Subtitle")
-					, actionbar = language.getString("Raid.RaidFinder.RaidFinderTitles.Actionbar");
-			
-			OfflinePlayer owner = Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(new Location(location.getWorld(), location.getX(), 0, location.getZ())));
-			main.getSkyBlock().getIslandManager().loadIsland(owner);
-			for(UUID uuid : party.getMembers()) {
-				if(Bukkit.getPlayer(uuid) != null) {
-					Player players = Bukkit.getPlayer(uuid);
-					islandSpectator.put(players.getUniqueId(), location);
-					
-					storage.saveToStorage(players);
-					startRaid(players, spectateLocation, party);
-					bar.addPlayer(players);
-					
-					new RaidTitles(title, subtitle, actionbar, players, null, main);
-				}
-
-			}
 			
 			
 		}
 		else {
-			FileConfiguration language = main.getLanguage();
 			player.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Raid.Error.NotEnoughIslands.Message")));
 		}
-	}
-	
-	//method to replace the "%Player%" in language.yml with the player's name
-	public String formatPlayer(String string, Player player) {
-		String newstr = string;
-		if(string.contains("%Player%")) {
-			newstr = string.replace("%Player%", player.getName());
-		}
-		return newstr;
 	}
 	
 	public void removeRaider(UUID uuid) {
@@ -309,6 +371,12 @@ public class RaidMethods {
 	}
 	
 	public List<Location> getIslands() {
+		List<Location> islands = new ArrayList<Location>();
+		for(UUID uuid : main.getIslandPositions().keySet()) {
+			Location loc = main.getIslandPositions().get(uuid), 
+					 newLoc = new Location(loc.getWorld(), loc.getX(), 0, loc.getZ());;
+			islands.add(newLoc);
+		}
 		return islands;
 	}
 	
@@ -335,8 +403,25 @@ public class RaidMethods {
 	}
 	
 	//method to convert '&' color codes to colors
-	public String format(String msg) {
+	public static String format(String msg) {
 		return ChatColor.translateAlternateColorCodes('&', msg);
+	}
+	
+	public static List<String> FORMATS = new ArrayList<String>(Arrays.asList(
+			"%Player%",
+			"%Date%",
+			"%TimeLeft%",
+			"%ID%",
+			"%RaidSense%"
+			));
+ 	public static String format(String msg, String value) {
+ 		String newStr = msg;
+ 		for(String format : FORMATS) {
+ 			if(msg.contains(format)) {
+ 				newStr = msg.replace(format, value);
+ 			}
+ 		}
+ 		return ChatColor.translateAlternateColorCodes('&', newStr);
 	}
 	
 	//method to run when a raider exits the server
@@ -385,10 +470,7 @@ public class RaidMethods {
 		if(getIslandRaider().containsKey(player.getUniqueId())) {
 			RaidParty party = raidManager.getMembersParty(player.getUniqueId());
 			if(isLastRaider(player)) {
-				Location raidedIsland = getIslandRaider().get(player.getUniqueId());
-				if(!getIslands().contains(raidedIsland)) {
-					getIslands().add(raidedIsland);	
-				}
+				Location raidedIsland = getIslandRaider().get(party.getLeader());
 				for(UUID member : party.getMembers()) {
 					if(Bukkit.getPlayer(member) != null) {
 						Bukkit.getPlayer(member).sendMessage(format(language.getString("Raid.Raid.Outcome.Lost.Message")));
@@ -404,30 +486,31 @@ public class RaidMethods {
 						}
 					}	
 				}
-				getRaidedIslands().remove(raidedIsland);
-				raidManager.getBossBar().get(party.getLeader()).cancelTask();
-				raidManager.getBossBar().get(party.getLeader()).getBar().removeAll();
+				RaidEnd.endRaid(player.getUniqueId());
 				
 				checkLeader(player.getUniqueId());
 			}
 			else {
-				raidManager.getRaidParties().get(party.getLeader()).addDeadMember(player);
+				raidManager.getRaidParties().get(party.getLeader()).addDeadMember(player.getUniqueId());
 			}	
 		}
 	}
+
 	
 	//method to check if a player is the last of the island's spectators
 	public void checkLastSpectator(Player player) {
 		if(getIslandSpectator().containsKey(player.getUniqueId())) {
 			if(isLastSpectator(player)) {
-				if(!getIslands().contains(getIslandSpectator().get(player.getUniqueId()))) {
-					getIslands().add(getIslandSpectator().get(player.getUniqueId()));	
+				Location loc = getIslandSpectator().get(player.getUniqueId()), 
+						 newLoc = new Location(loc.getWorld(), loc.getX(), 0, loc.getZ());
+				if(spectatedIslands.contains(newLoc)) {
+					spectatedIslands.remove(newLoc);
 				}
 				RaidParty party = raidManager.getMembersParty(player.getUniqueId());
 				if(party.getLeader().equals(player.getUniqueId())) {
 					for(UUID member : party.getMembers()) {
 						if(Bukkit.getPlayer(member) != null) {
-							Bukkit.getPlayer(member).sendMessage(format(language.getString("Raid.RaidParty.Leader.LeftParty.Message")));
+							Bukkit.getPlayer(member).sendMessage(format(language.getString("RaidParty.Leader.LeftParty.Message")));
 						}
 					}	
 				}
@@ -481,12 +564,14 @@ public class RaidMethods {
 	//method to run when a raid stops
 	public void cancelRaid(Player player) {
 		if(raidManager.getLeaders().contains(player.getUniqueId())) {
-			for(UUID uuid : raidManager.getRaidParties().get(player.getUniqueId()).getMembers()) {
-				if(Bukkit.getOfflinePlayer(uuid) != null) {
+			for(UUID uuid : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
+				if(Bukkit.getPlayer(uuid) != null) {
 					OfflinePlayer member = Bukkit.getOfflinePlayer(uuid);
 					((Player)member).teleport(raidManager.getStartPositions().get(uuid));
-					if(!islands.contains(getIslandSpectator().get(member.getUniqueId()))) {
-						islands.add(getIslandSpectator().get(member.getUniqueId()));	
+					Location loc = getIslandSpectator().get(member.getUniqueId()), 
+							 newLoc = new Location(loc.getWorld(), loc.getX(), 0, loc.getZ());
+					if(spectatedIslands.contains(newLoc)) {
+						spectatedIslands.remove(newLoc);
 					}	
 				}
 			}
@@ -503,26 +588,29 @@ public class RaidMethods {
 	
 	//method to run when a spectator decides to raid an island
 	public void raidIslandFromSpectator(Player player) {
-		Location tempIsland = getIslandSpectator().get(player.getUniqueId());
+		Location tempIsland = islandSpectator.get(player.getUniqueId());
 		Location raidIsland = new Location(tempIsland.getWorld(), tempIsland.getX(), 72, tempIsland.getZ());
-		
-		RaidBar bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "raid"));
 		
 		OfflinePlayer owner = Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(tempIsland));
 		islandManager.loadIsland(owner);
 		
-		for(UUID member : raidManager.getRaidParties().get(player.getUniqueId()).getMembers()) {
+		for(UUID member : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
 			if(Bukkit.getPlayer(member) != null) {
-				removeSpectator(member);
 				Bukkit.getPlayer(member).teleport(raidIsland);
 				
 				Bukkit.getPlayer(member).setAllowFlight(false);
-				Bukkit.getPlayer(member).setInvulnerable(false);	
-				addRaider(member, raidIsland);
+				Bukkit.getPlayer(member).setInvulnerable(false);
+				removeSpectator(member);
 				main.getStorage().restoreItems(Bukkit.getPlayer(member));
+				addRaider(member, raidIsland);
+				
+				for(Player players : Bukkit.getOnlinePlayers()) {
+					players.showPlayer(main, Bukkit.getPlayer(member));
+				}
 			}
 		}
 		
+		RaidBar bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "raid"));
 		for(IslandRole ir : IslandRole.getRoles()) {
 			for(UUID member : islandManager.getIslandByOwner(owner).getRole(ir)) {
 				if(Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(member))) {
@@ -534,7 +622,9 @@ public class RaidMethods {
 	
 	//method for spectators to go to the next island
 	public void nextIsland(Player player) {
-		islands.add(islandSpectator.get(player.getUniqueId()));
+		Location loc = islandSpectator.get(player.getUniqueId()), 
+				 newLoc = new Location(loc.getWorld(), loc.getX(), 0, loc.getZ());
+		spectatedIslands.remove(newLoc);
 		exitRaidSpectator(player);
 		for(UUID member : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
 			if(Bukkit.getPlayer(member) != null) {
@@ -543,5 +633,66 @@ public class RaidMethods {
 			}
 		}
 		enterSpectateMode(player);
+	}
+	
+	public void checkForAmplifiers(RaidParty party) {
+		if(configLoad.getConfigurationSection("Raid.RaidSense.SenseMultipliers").getKeys(false).iterator().hasNext()) {
+			UUID raidIslandOwner = PlayerManager.getPlayersIsland(party.getLeader()).getOwnerUUID();
+			
+			String configSection = "Raid.RaidSense.SenseMultipliers";
+			List<String> minValues = new ArrayList<String>(configLoad.getConfigurationSection(configSection).getKeys(false));
+			for(int i = 0; i < configLoad.getConfigurationSection(configSection).getKeys(false).size(); i++) {
+				if(i+1 < minValues.size()) {
+					if(fdb.getRaidSense(raidIslandOwner) > Integer.parseInt(minValues.get(i)) && fdb.getRaidSense(raidIslandOwner) < Integer.parseInt(minValues.get(i+1))) {
+						for(UUID member : party.getMembers()) {
+							for(PotionEffect effect : getPotionEffects(configLoad.getConfigurationSection(configSection + "." + minValues.get(i) + ".PotionEffects"))) {
+								if(Bukkit.getPlayer(member) != null) {
+									Bukkit.getPlayer(member).addPotionEffect(effect);
+								}
+							}
+						}
+					}	
+				}
+				else {
+					for(UUID member : party.getMembers()) {
+						for(PotionEffect effect : getPotionEffects(configLoad.getConfigurationSection(configSection + "." + minValues.get(i) + ".PotionEffects"))) {
+							if(Bukkit.getPlayer(member) != null) {
+								Bukkit.getPlayer(member).addPotionEffect(effect);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private List<PotionEffect> getPotionEffects(ConfigurationSection section) {
+		List<PotionEffect> potionEffects = new ArrayList<PotionEffect>();
+		for(String effect : section.getKeys(false)) {
+			int amplifier = section.getInt(effect + ".Amplifier"),
+				duration = RaidSenseTime.convertHoursMinutesSecondsToSeconds(section.getString(effect + ".Duration"))*20;
+			
+			PotionType type = PotionType.valueOf(effect);
+			potionEffects.add(new PotionEffect(type.getEffectType(), duration, amplifier-1));
+		}
+		return potionEffects;
+	}
+	
+	
+	public static List<String> getBlackListCommands() {
+		return new ArrayList<String>(Arrays.asList(
+				RaidPartyAccept.NAME,
+				RaidPartyDeny.NAME,
+				RaidPartyCancelInvite.NAME,
+				RaidPartyExitGUI.NAME,
+				StolenItems.NAME,
+				SpecificHistory.NAME
+				));
+	}
+	
+	public UUID getIslandUUIDByLocation(Location location) {
+		Island island = main.getSkyBlock().getIslandManager().getIsland(Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(location)));
+		
+		return island.getIslandUUID();
 	}
 }

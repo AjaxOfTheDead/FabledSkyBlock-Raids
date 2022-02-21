@@ -28,7 +28,7 @@ Island:
   Structure:
     SpawnZoneTool:
       Position:
-        Message: '&bSkyBlock &8| &aInfo&8: &bPosition &d%position &bhas been selected!'
+        Message: '&bSkyBlock &8| &aInfo&8: &bPosition &d%Position% &bhas been selected!'
       Material:
         Message: '&bSkyBlock &8| &cError&8: &bThe defined material in the configuration file for the SpawnZone selection tool could not be found.'
       Item:
@@ -36,6 +36,9 @@ Island:
         Lore:
         - '&7Select two positions of'
         - '&7an area.'
+  Error:
+    NoIsland:
+      Message: '&bSkyBlock &8| &cError&8: &eYou don''t have an island.'
 Raid:
   RaidFinder:
     Menu:
@@ -57,6 +60,9 @@ Raid:
       Title: '&cScouting island'
       Subtitle: '&f%TimeLeft% Second(s) Left!'
       Actionbar: '&cHurry up and raid them!'
+    Error:
+      InsufficientFunds:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYour island doesn''t have enough RaidSense to raid another island.'
   Raid:
     Outcome:
       Won:
@@ -65,11 +71,14 @@ Raid:
         Message: '&bSkyBlock &8| &4Raid&8: &eYou''ve lost the raid.'
     Teleport:
       DeniedOthers:
-        Message: '&bSkyBlock &8| &cError&8: &eYou can''t teleport to players while they are in a raid.'
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou can''t teleport to players while they are in a raid.'
       DeniedSelf:
-        Message: '&bSkyBlock &8| &cError&8: &eYou can''t teleport while in a raid.'
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou can''t teleport while in a raid.'
     BossBar:
       Title: '&fRaiding Island: %TimeLeft%s'
+    Raiding:
+      NotRaiding:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou''re not raiding an island right now.'
   Prepare:
     BossBar:
       Title: '&fRaid starting in: %TimeLeft%s'
@@ -77,42 +86,64 @@ Raid:
       Title: '&cRaiding island in %TimeLeft%s'
       Subtitle: '&fPrepare yourself!'
       Actionbar: '&cHurry up and raid them!'
-  RaidParty:
-    Leader:
-      LeftParty:
-        Message: '&bSkyBlock &8| &4RaidParty&8: &eThe leader has left the party.'
-    Invite:
-      Send:
-        AlreadySent:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &eYou''ve already sent an invite to this player.'
-        Expired:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &eThe party invite expired.'
-        AlreadyInParty:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &eThat player is already in your party.'
-        SelfInvite:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &eYou can''t invite yourself to the party.'
-      Receive:
-        InviteReceived:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &eYou have been invited to join %Player%''s party.'
-        AlreadyInParty:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &eYou have to leave your current party to join a new one.'
-        Accepted:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &b%Player% has joined the party!'
-        Denied:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &e%Player% has denied your party invitation.'
-        NoInvite:
-          Message: '&bSkyBlock &8| &4RaidParty&8: &eYou don''t have an invitation to join this party!'
-    NoParty:
-      Message: '&bSkyBlock &8| &4RaidParty&8: &eYou need to invite a player first.'
-    EndOfHelp:
-      Message: '&bSkyBlock &8| &4RaidParty&8: &eThis is the end of the help list.'
-    Raid:
-      NotLeader: 
-        Message: '&bSkyBlock &8| &4RaidParty&8: &eYou are not the party leader.'
   Error:
     NotEnoughIslands:
-      Message: '&bSkyBlock &8| &cError&8: &eThere are not enough islands to raid.'
+      Message: '&bSkyBlock &8| &4Raid&8: &eThere are not enough islands to raid.'
     AlreadyRaiding:
-      Message: '&bSkyBlock &8| &cError&8: &eYou''re already raiding an island.'
+      Message: '&bSkyBlock &8| &4Raid&8: &eYou''re already raiding an island.'
+    EndOfHelp:
+      Message: '&bSkyBlock &8| &4Raid&8: &eYou''ve reached the end of the help list.'
+RaidParty:
+  Leader:
+    LeftParty:
+      Message: '&bSkyBlock &8| &4Raid&8: &eThe leader has left the party.'
+    NotLeader: 
+      Message: '&bSkyBlock &8| &4Raid&8: &eYou are not the party leader.'
+    ChangeLeader:
+      Message: '&bSkyBlock &8| &4Raid&8: &eYou are now the party leader.'
+  Invite:
+    Send:
+      InviteSent:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou''ve invited %Player%.'
+      AlreadySent:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou''ve already sent an invite to this player.'
+      Expired:
+        Message: '&bSkyBlock &8| &4Raid&8: &eThe party invite expired.'
+      AlreadyInParty:
+        Message: '&bSkyBlock &8| &4Raid&8: &eThat player is already in your party.'
+      SelfInvite:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou can''t invite yourself to the party.'
+      Cancel:
+        Canceled:
+          Message: '&bSkyBlock &8| &4Raid&8: &eInvite canceled.'
+        NoInvite:
+          Message: '&bSkyBlock &8| &4Raid&8: &eThere are no pending invites.'
+    Receive:
+      InviteReceived:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou have been invited to join %Player%''s party.'
+      AlreadyInParty:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou have to leave your current party to join a new one.'
+      Accepted:
+        Message: '&bSkyBlock &8| &4Raid&8: &b%Player% has joined the party!'
+      Denied:
+        Message: '&bSkyBlock &8| &4Raid&8: &e%Player% has denied your party invitation.'
+      NoInvite:
+        Message: '&bSkyBlock &8| &4Raid&8: &eYou don''t have an invitation to join this party!'
+  Kick:
+    Message: '&bSkyBlock &8| &4Raid&8: &b%Player% has been kicked from the party.'
+  Leave:
+    Message: '&bSkyBlock &8| &4Raid&8: &b%Player% has left the party.'
+  Error:
+    PlayerNotOnline:
+      Message: '&bSkyBlock &8| &4Raid&8: &eThat player isn''t online.'
+    PlayerNotAnIslandMember:
+      Message: '&bSkyBlock &8| &4Raid&8: &eThat player isn''t a member of your island.'
     PlayerNotExist:
-      Message: '&bSkyBlock &8| &cError&8: &eThat player doesn''t exist.'
+      Message: '&bSkyBlock &8| &4Raid&8: &eThat player doesn''t exist.'
+    NoParty:
+      Message: '&bSkyBlock &8| &4Raid&8: &eYou''re not in a party yet, invite a player to create one.'
+    NotInParty:
+      Message: '&bSkyBlock &8| &4Raid&8: &eThis player is not in your party.'
+RaidSense:
+  GetBalance:
+    Message: '&c&lRaidSense balance: &a%RaidSense%'

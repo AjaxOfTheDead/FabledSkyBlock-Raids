@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -22,12 +23,18 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import com.songoda.core.compatibility.CompatibleSound;
+import com.songoda.skyblock.island.Island;
+import com.songoda.skyblock.island.IslandManager;
 import com.songoda.skyblock.sound.SoundManager;
 
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Mysql.FastDataAccess;
+import me.ResurrectAjax.Raid.RaidMethods;
+import me.ResurrectAjax.Raid.RaidParty;
 import net.md_5.bungee.api.ChatColor;
 
 public class BlockListeners implements Listener{
@@ -42,6 +49,27 @@ public class BlockListeners implements Listener{
     public void onBlockBreak(BlockBreakEvent event) {
     	if(inSpawnZone(event)) {
     		event.setCancelled(true);
+    	}
+    	Player player = event.getPlayer();
+    	RaidMethods raidMethods = main.getRaidMethods();
+    	
+    	Inventory blockInventory = null;
+    	if(event.getBlock().getState() instanceof Container) {
+        	blockInventory = ((Container) event.getBlock().getState()).getSnapshotInventory();	
+    	}
+    	if(!raidMethods.getIslandRaider().isEmpty() && raidMethods.getIslandRaider().containsKey(player.getUniqueId())) {
+    		IslandManager islandManager = main.getSkyBlock().getIslandManager();
+    		UUID islandUUID = raidMethods.getIslandUUIDByLocation(raidMethods.getIslandRaider().get(player.getUniqueId()));
+    		Island island = islandManager.getIslandByUUID(islandUUID);
+    		
+    		if(island.isInBorder(event.getBlock().getLocation()) && !inSpawnZone(event)) {
+    			ItemStack item = new ItemStack(event.getBlock().getType());
+    			RaidParty party = main.getRaidManager().getMembersParty(player.getUniqueId());
+    			party.addBrokenBlock(item);
+    			if(event.getBlock().getState() instanceof Container) {
+    				party.addContainerItems(item.getType(), blockInventory.getContents());
+    			}
+    		}
     	}
     }
     

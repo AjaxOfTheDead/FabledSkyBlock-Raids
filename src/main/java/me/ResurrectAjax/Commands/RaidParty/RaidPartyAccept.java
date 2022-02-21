@@ -1,4 +1,4 @@
-package me.ResurrectAjax.Commands.Raid;
+package me.ResurrectAjax.Commands.RaidParty;
 
 import java.util.List;
 import java.util.UUID;
@@ -9,20 +9,23 @@ import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 import me.ResurrectAjax.Main.Main;
+import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
 import me.ResurrectAjax.Raid.RaidParty;
 
 public class RaidPartyAccept extends CommandInterface{
+	public static String NAME = "accept";
+	
 	private Main main;
-	private RaidMethods methods;
+	private RaidManager raidManager;
 	public RaidPartyAccept(Main main) {
 		this.main = main;
-		methods = main.getRaidMethods();
+		raidManager = main.getRaidManager();
 	}
 
 	public String getName() {
 		// TODO Auto-generated method stub
-		return "accept";
+		return NAME;
 	}
 
 	public String getSyntax() {
@@ -35,12 +38,14 @@ public class RaidPartyAccept extends CommandInterface{
 		return "Accept a player's party invitation";
 	}
 
-	public String[] getArguments() {
-		String[] playernames = new String[Bukkit.getOnlinePlayers().size()];
+	public String[] getArguments(UUID uuid) {
+		String[] playernames = new String[raidManager.getPartyInvites().keySet().size()];
 		int count = 0;
-		for(Player players : Bukkit.getOnlinePlayers()) {
-			playernames[count] = players.getName();
-			count++;
+		for(UUID player : raidManager.getPartyInvites().keySet()) {
+			if(raidManager.getPartyInvites().get(player).contains(uuid)) {
+				playernames[count] = Bukkit.getOfflinePlayer(player).getName();
+				count++;	
+			}
 		}
 		return playernames;
 	}
@@ -62,20 +67,20 @@ public class RaidPartyAccept extends CommandInterface{
 					}
 					
 					if(main.getRaidManager().getMembersParty(player.getUniqueId()) == null) {
-						main.getRaidManager().getRaidParties().get(receiver.getUniqueId()).addMember(player);
+						main.getRaidManager().getRaidParties().get(receiver.getUniqueId()).addMember(player.getUniqueId());
 						for(UUID member : main.getRaidManager().getRaidParties().get(receiver.getUniqueId()).getMembers()) {
 							if(Bukkit.getPlayer(member) != null) {
-								Bukkit.getPlayer(member).sendMessage(methods.format(methods.formatPlayer(language.getString("Raid.RaidParty.Invite.Receive.Accepted.Message"), player)));		
+								Bukkit.getPlayer(member).sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.Accepted.Message"), player.getName()));		
 							}
 						}
 						main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).remove(player.getUniqueId());
 					}
 					else {
-						player.sendMessage(methods.format(language.getString("Raid.RaidParty.Invite.Receive.AlreadyInParty.Message")));	
+						player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.AlreadyInParty.Message")));	
 					}
 				}
 				else {
-					player.sendMessage(methods.format(language.getString("Raid.RaidParty.Invite.Receive.NoInvite.Message")));	
+					player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.NoInvite.Message")));	
 				}
 				
 			}

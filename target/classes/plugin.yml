@@ -13,3 +13,9 @@ commands:
   RaidParty:
     description: Open the RaidParty GUI
     usage: /<command>
+  RaidHistory:
+    description: open the RaidHistory GUI
+    usage: /<command>
+  RaidSense:
+    description: Get the RaidSense balance of a player's island
+    usage: /<command>

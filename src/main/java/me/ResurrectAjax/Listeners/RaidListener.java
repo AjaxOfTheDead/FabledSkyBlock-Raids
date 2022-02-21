@@ -4,7 +4,10 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,7 +27,6 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 import com.songoda.skyblock.SkyBlock;
-import com.songoda.skyblock.api.event.player.PlayerIslandEnterEvent;
 import com.songoda.skyblock.island.Island;
 import com.songoda.skyblock.island.IslandEnvironment;
 import com.songoda.skyblock.island.IslandManager;
@@ -33,7 +35,9 @@ import com.songoda.skyblock.island.IslandWorld;
 import com.songoda.skyblock.visit.Visit;
 
 import me.ResurrectAjax.Main.Main;
+import me.ResurrectAjax.Mysql.Database;
 import me.ResurrectAjax.Mysql.FastDataAccess;
+import me.ResurrectAjax.Playerdata.PlayerManager;
 import me.ResurrectAjax.Raid.RaidBar;
 import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
@@ -47,6 +51,7 @@ public class RaidListener implements Listener{
 	private FastDataAccess fdb;
 	private RaidMethods methods;
 	private final SkyBlock skyblock;
+	private Database db;
 	
 	public RaidListener(Main main) {
 		this.main = main;
@@ -60,6 +65,8 @@ public class RaidListener implements Listener{
 		methods = main.getRaidMethods();
 		
 		fdb = main.getFastDataAccess();
+		
+		db = main.getRDatabase();
 	}
 	
 	@EventHandler
@@ -119,8 +126,12 @@ public class RaidListener implements Listener{
 						if(Bukkit.getPlayer(uuid) != null && !uuid.equals(player.getUniqueId())) {
 							bar.addPlayer(Bukkit.getPlayer(uuid));
 							main.getStorage().restoreItems(Bukkit.getPlayer(uuid));
+							
+							methods.startSpectating(player, spawnLocation, raidManager.getMembersParty(uuid));
 						}
 					}
+					methods.setCurrentRaid(player.getUniqueId(), db.insertRaidParty(raidManager.getMembersParty(player.getUniqueId())));
+					methods.checkForAmplifiers(raidManager.getMembersParty(player.getUniqueId()));
 					
 				}
 				if(player.getInventory().getItemInMainHand().getType() == ItemStorage.getNextItem().getType()) {
@@ -188,7 +199,7 @@ public class RaidListener implements Listener{
 	        }
 			
 			for(UUID uuid : main.getIslandPositions().keySet()) {
-				if(islandManager.getIsland(player).getOwnerUUID() == uuid || islandManager.getIslandByOwner(Bukkit.getOfflinePlayer(uuid)).getVisit().getVisitors().contains(player.getUniqueId())) {
+				if(PlayerManager.getPlayersIsland(player.getUniqueId()).getOwnerUUID() == uuid || islandManager.getIslandByOwner(Bukkit.getOfflinePlayer(uuid)).getVisit().getVisitors().contains(player.getUniqueId())) {
 					Bukkit.getScheduler().scheduleSyncDelayedTask(main.getSkyBlock(), () -> {
 		                player.spigot().respawn();
 		                player.setFallDistance(0.0F);
@@ -197,7 +208,7 @@ public class RaidListener implements Listener{
 		                	player.teleport(spawnLocation);
 		                }, 1L);
 		            }, 1L);
-					if(islandManager.getIsland(Bukkit.getOfflinePlayer(uuid)).getVisit().getVisitors().contains(player.getUniqueId())) {
+					if(PlayerManager.getPlayersIsland(player.getUniqueId()).getVisit().getVisitors().contains(player.getUniqueId())) {
 						Visit visit = islandManager.getIslandByOwner(Bukkit.getOfflinePlayer(uuid)).getVisit();
 						visit.removeVisitor(player.getUniqueId());
 					}
@@ -229,7 +240,7 @@ public class RaidListener implements Listener{
 		
 		for(UUID uuid : main.getIslandPositions().keySet()) {
 			if(methods.getRaidedIslands().containsValue(player.getUniqueId())) {
-				if(islandManager.getIsland(player).getOwnerUUID() == uuid || islandManager.getIsland(Bukkit.getOfflinePlayer(uuid)).getVisit().getVisitors().contains(player.getUniqueId())) {
+				if(islandManager.getIsland(player).getOwnerUUID() == uuid || PlayerManager.getPlayersIsland(uuid).getVisit().getVisitors().contains(player.getUniqueId())) {
 					player.teleport(spawnLocation);
 					if(islandManager.getIslandByOwner(Bukkit.getOfflinePlayer(uuid)).getVisit().getVisitors().contains(player.getUniqueId())) {
 						Visit visit = islandManager.getIslandByOwner(Bukkit.getOfflinePlayer(uuid)).getVisit();
@@ -255,20 +266,21 @@ public class RaidListener implements Listener{
 			for(Island island : islandManager.getIslands().values()) {
 				if(islandManager.isLocationAtIsland(island, location)) {
 			    	if(islandManager.isLocationAtIsland(island, event.getFrom())) {
-			    		if(raidManager.getMembersParty(tpPlayer.getUniqueId()) != null) {
-			    			raidManager.getMembersParty(tpPlayer.getUniqueId()).addDeadMember(tpPlayer);
-			    		}
 			    		if(raidManager.getRaidedIslandOwners().contains(tpPlayer.getUniqueId()) || methods.getIslandRaider().containsKey(tpPlayer.getUniqueId())) {
-				    		event.setTo(spawnLocation);
-				    		if(methods.getIslandRaider().containsKey(tpPlayer.getUniqueId())) {
-					    		methods.onRaiderQuit(tpPlayer);	
-				    		}
+			    			
+			    			Block block = tpPlayer.getLocation().getBlock().getRelative(BlockFace.DOWN);
+			    			if(event.getFrom().getBlockY() < 30 && block.getType() == Material.AIR) {
+					    		event.setTo(spawnLocation);
+					    		if(methods.getIslandRaider().containsKey(tpPlayer.getUniqueId())) {
+						    		methods.onRaiderQuit(tpPlayer);	
+					    		}	
+			    			}
 			    		}
 			    	}
 			    	else {
 				    	if(islandManager.isLocationAtIsland(island, event.getTo())) {
 				    		event.setCancelled(true);
-							tpPlayer.sendMessage(methods.format(language.getString("Raid.Raid.Teleport.DeniedSelf.Message")));
+							tpPlayer.sendMessage(RaidMethods.format(language.getString("Raid.Raid.Teleport.DeniedSelf.Message")));
 				    	}	
 			    	}
 				}
@@ -279,8 +291,8 @@ public class RaidListener implements Listener{
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		
-		if(islandManager.getIsland(event.getPlayer()) != null) {
-			Island island = islandManager.getIsland(event.getPlayer());
+		if(PlayerManager.getPlayersIsland(event.getPlayer().getUniqueId()) != null) {
+			Island island = PlayerManager.getPlayersIsland(event.getPlayer().getUniqueId());
 		 	Location playerIslandLocation = island.getLocation(IslandWorld.Normal, IslandEnvironment.Main);	
 		 	
 		 	for(Location location : methods.getRaidedIslands().keySet()) {

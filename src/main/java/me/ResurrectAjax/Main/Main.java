@@ -13,6 +13,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.Plugin;
@@ -25,6 +26,7 @@ import com.songoda.skyblock.config.FileManager.Config;
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 import me.ResurrectAjax.Commands.Managers.CommandManager;
 import me.ResurrectAjax.Commands.Managers.FileManager;
+import me.ResurrectAjax.Commands.RaidHistory.RaidHistoryMap;
 import me.ResurrectAjax.Listeners.BlockListeners;
 import me.ResurrectAjax.Listeners.CommandListener;
 import me.ResurrectAjax.Listeners.InteractListeners;
@@ -36,10 +38,14 @@ import me.ResurrectAjax.Mysql.Database;
 import me.ResurrectAjax.Mysql.FastDataAccess;
 import me.ResurrectAjax.Mysql.MysqlMain;
 import me.ResurrectAjax.Playerdata.PlayerDataManager;
+import me.ResurrectAjax.Playerdata.PlayerManager;
 import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
 import me.ResurrectAjax.Raid.ItemStorage.ItemStorage;
+import me.ResurrectAjax.RaidGUI.GuiClickEvent;
 import me.ResurrectAjax.RaidGUI.GuiManager;
+import me.ResurrectAjax.RaidSense.RaidSenseListener;
+import me.ResurrectAjax.RaidSense.RaidSenseTime;
 
 public class Main extends JavaPlugin{
 	private static Main INSTANCE;
@@ -67,6 +73,9 @@ public class Main extends JavaPlugin{
 	
 	private TabCompletion tabCompleter;
 	
+	private RaidSenseTime islandTime;
+	
+	private RaidHistoryMap historymap;
 	
 	public static Main getInstance() {
         return INSTANCE;
@@ -84,9 +93,14 @@ public class Main extends JavaPlugin{
 		//load database
 		this.db = new MysqlMain(this);
 		this.db.load();
+		//database
 		
+		//load all the classes
 		loadFiles();
+		//classes
 
+		
+		//load the Listeners
 		getServer().getPluginManager().registerEvents(new CommandListener(skyblock, this), this);
 		getServer().getPluginManager().registerEvents(new BlockListeners(this), this);
 		getServer().getPluginManager().registerEvents(new InteractListeners(this), this);
@@ -94,31 +108,37 @@ public class Main extends JavaPlugin{
 		getServer().getPluginManager().registerEvents(new RaidListener(this), this);
 		getServer().getPluginManager().registerEvents(new JoinListeners(this), this);
 		getServer().getPluginManager().registerEvents(new MoveListeners(skyblock), this);
-		
-		//database
-		
-		
-		//load data for fast access
-		//
-		//
-		//
+		getServer().getPluginManager().registerEvents(new GuiClickEvent(this), this);
+		getServer().getPluginManager().registerEvents(new RaidSenseListener(this), this);
 		//Listeners
+		
 		
 		//unregister listeners
 		PlayerJoinEvent.getHandlerList().unregister(skyblock);
 		PlayerDeathEvent.getHandlerList().unregister(skyblock);
-		PlayerMoveEvent.getHandlerList();
+		PlayerMoveEvent.getHandlerList().unregister(skyblock);
+		PlayerInteractEvent.getHandlerList().unregister(skyblock);
 		for(RegisteredListener regis : HandlerList.getRegisteredListeners(skyblock)) {
 			if(regis.getListener().getClass() == com.songoda.skyblock.listeners.MoveListeners.class) {
 				PlayerMoveEvent.getHandlerList().unregister(regis);
 			}
 		}
+		//unregistered listeners
 		
-		getCommand("raidparty").setTabCompleter(tabCompleter);
+		//set the tabCompleter
+		for(CommandInterface command : commandManager.getCommands()) {
+			getCommand(command.getName()).setTabCompleter(tabCompleter);
+		}
+		//tabCompleter
 		
-	
+		//run a check for all the islands' RaidSense every # hours/minutes/seconds
+		for(Player player : Bukkit.getOnlinePlayers()) {
+			islandTime.putPlayerLogTime(player.getUniqueId());
+		}
+		islandTime.checkTimeTask();
 	}
 	
+	//hook into FabledSkyBlock
 	public boolean hookFabledSkyBlock() {
 		try {
 			for(Plugin plugin : getServer().getPluginManager().getPlugins()) {
@@ -137,29 +157,36 @@ public class Main extends JavaPlugin{
 	public void onDisable() {
 		for(Player player : Bukkit.getOnlinePlayers()) {
 			raidMethods.onRaiderQuit(player);
-			raidMethods.onSpectatorQuit(player);	
+			raidMethods.onSpectatorQuit(player);
+			islandTime.savePlayerTime(player);
 		}
 	}
 	
+	//function for running commands
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(sender instanceof Player) {
 			Player player = (Player)sender;
 			
-			
+			//check all the base commands in this plugin
 			for(CommandInterface command : commandManager.getCommands()) {
 				if(label.equalsIgnoreCase(command.getName())) {
-					if(skyblock.getIslandManager().getIsland(player) != null) {
-						if(command.getArguments().length > 0) {
+					if(PlayerManager.getPlayersIsland(player.getUniqueId()) != null) {
+						//check if base command has arguments
+						if(command.getArguments(player.getUniqueId()) != null) {
 							switch(args.length) {
+								case 0:
 								case 1:
+									//run command if the player entered 1 argument
 									command.perform(player, args);
 									break;
 								case 2:
 								case 3:
+									//check if command has subcommands
 									if(command.getSubCommands() != null) {
 										for(CommandInterface subcommands : command.getSubCommands()) {
 											for(int i = 0; i < args.length; i++) {
+												//check if player entered the right arguments for specific subcommand
 												if(subcommands.getName().equalsIgnoreCase(args[i])) {
 													command.perform(player, args);
 												}
@@ -181,7 +208,7 @@ public class Main extends JavaPlugin{
 						
 					}
 					else {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', skyblock.getLanguage().getString("Command.Island.Bans.Owner.Message")));
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Island.Error.NoIsland.Message")));
 					}
 				}
 			}
@@ -256,6 +283,14 @@ public class Main extends JavaPlugin{
     public CommandManager getCommandManager() {
     	return commandManager;
     }
+    
+    public RaidSenseTime getIslandTime() {
+    	return islandTime;
+    }
+    
+    public RaidHistoryMap getRaidHistoryMap() {
+    	return historymap;
+    }
     //ResurrectAjax getters
 	
 	
@@ -263,9 +298,7 @@ public class Main extends JavaPlugin{
 	public void loadFiles() {
 		INSTANCE = this;
 		
-        fdb = new FastDataAccess(db);
-        fdb.putAllSpawnZones();
-        fdb.putAllStructures();
+        fdb = new FastDataAccess(db, this);
         
         fileManager = new FileManager(this);
         config = this.getFileManager().getConfig(new File(this.getDataFolder(), "config.yml")).getFileConfiguration();
@@ -280,11 +313,17 @@ public class Main extends JavaPlugin{
         
         raidMethods = new RaidMethods(this);
         
+        
+        guiManager = new GuiManager(this);
+        
         commandManager = new CommandManager(this);
         
         tabCompleter = new TabCompletion(this);
         
-        guiManager = new GuiManager(this);
+        islandTime = new RaidSenseTime(this);
+        
+        historymap = new RaidHistoryMap(this);
+        
 	}
 
 }

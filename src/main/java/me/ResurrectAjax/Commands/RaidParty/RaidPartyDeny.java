@@ -1,6 +1,7 @@
-package me.ResurrectAjax.Commands.Raid;
+package me.ResurrectAjax.Commands.RaidParty;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -8,19 +9,22 @@ import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 import me.ResurrectAjax.Main.Main;
+import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
 
 public class RaidPartyDeny extends CommandInterface{
+	public static String NAME = "deny";
+	
 	private Main main;
-	private RaidMethods methods;
+	private RaidManager raidManager;
 	public RaidPartyDeny(Main main) {
 		this.main = main;
-		methods = main.getRaidMethods();
+		raidManager = main.getRaidManager();
 	}
 
 	public String getName() {
 		// TODO Auto-generated method stub
-		return "deny";
+		return NAME;
 	}
 
 	public String getSyntax() {
@@ -33,12 +37,14 @@ public class RaidPartyDeny extends CommandInterface{
 		return "Deny a player's party invitation";
 	}
 
-	public String[] getArguments() {
-		String[] playernames = new String[Bukkit.getOnlinePlayers().size()];
+	public String[] getArguments(UUID uuid) {
+		String[] playernames = new String[raidManager.getPartyInvites().keySet().size()];
 		int count = 0;
-		for(Player players : Bukkit.getOnlinePlayers()) {
-			playernames[count] = players.getName();
-			count++;
+		for(UUID player : raidManager.getPartyInvites().keySet()) {
+			if(raidManager.getPartyInvites().get(player).contains(uuid)) {
+				playernames[count] = Bukkit.getOfflinePlayer(player).getName();
+				count++;	
+			}
 		}
 		return playernames;
 	}
@@ -56,10 +62,10 @@ public class RaidPartyDeny extends CommandInterface{
 				
 				if(main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).contains(player.getUniqueId())) {
 					main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).remove(player.getUniqueId());
-					receiver.sendMessage(methods.format(methods.formatPlayer(language.getString("Raid.RaidParty.Invite.Receive.Denied.Message"), player)));	
+					receiver.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.Denied.Message"), player.getName()));	
 				}
 				else {
-					player.sendMessage(methods.format(language.getString("Raid.RaidParty.Invite.Receive.NoInvite.Message")));	
+					player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.NoInvite.Message")));	
 				}
 			}
 		}

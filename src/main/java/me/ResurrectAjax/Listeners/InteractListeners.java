@@ -2,18 +2,22 @@ package me.ResurrectAjax.Listeners;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.UUID;
 
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.Container;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -44,6 +48,8 @@ import com.songoda.skyblock.utils.world.LocationUtil;
 import com.songoda.skyblock.world.WorldManager;
 
 import me.ResurrectAjax.Main.Main;
+import me.ResurrectAjax.Raid.RaidMethods;
+import me.ResurrectAjax.Raid.RaidParty;
 import me.ResurrectAjax.Utils.Structure.StructureUtil;
 
 public class InteractListeners implements Listener {
@@ -89,7 +95,7 @@ public class InteractListeners implements Listener {
                 		main.getPlayerDataManager().getPlayerData(player).getSpawnZoneArea().setPosition(position, event.getClickedBlock().getLocation());
                         messageManager.sendMessage(player,
                         		main.getFileManager().getConfig(new File(main.getDataFolder(), "language.yml")).getFileConfiguration().getString("Island.Structure.SpawnZoneTool.Position.Message")
-                                        .replace("%position", position.toString()));
+                                        .replace("%Position%", position.toString()));
                     
                     }
                     catch(Exception e) {
@@ -110,7 +116,7 @@ public class InteractListeners implements Listener {
                         plugin.getPlayerDataManager().getPlayerData(player).getArea().setPosition(position, event.getClickedBlock().getLocation());
                         messageManager.sendMessage(player,
                         		plugin.getFileManager().getConfig(new File(plugin.getDataFolder(), "language.yml")).getFileConfiguration().getString("Island.Structure.Tool.Position.Message")
-                                        .replace("%position", position.toString()));
+                                        .replace("%Position%", position.toString()));
                     }
                     catch(Exception e) {
                     	
@@ -518,5 +524,39 @@ public class InteractListeners implements Listener {
         if (plugin.getStackableManager() != null && plugin.getStackableManager().isStacked(event.getRightClicked().getLocation().getBlock().getLocation())) {
             event.setCancelled(true);
         }
+    }
+    
+    
+    private HashMap<UUID, ItemStack[]> playerInventories = new HashMap<UUID, ItemStack[]>();
+    @EventHandler
+    public void onInventoryOpen(InventoryOpenEvent event) {
+    	RaidMethods raidMethods = main.getRaidMethods();
+    	Player player = (Player)event.getPlayer();
+    	
+    	if(!raidMethods.getIslandRaider().isEmpty() && raidMethods.getIslandRaider().containsKey(player.getUniqueId())) {
+    		IslandManager islandManager = main.getSkyBlock().getIslandManager();
+    		UUID islandUUID = raidMethods.getIslandUUIDByLocation(raidMethods.getIslandRaider().get(player.getUniqueId()));
+    		Island island = islandManager.getIslandByUUID(islandUUID);
+    		
+    		if(island.isInBorder(player.getLocation()) && !main.getGuiManager().isInCustomGui(player.getUniqueId())) {
+    			playerInventories.put(player.getUniqueId(), event.getInventory().getContents());
+    		}
+    	}
+    }
+    
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+		Player player = (Player) event.getPlayer();
+		
+    	if(playerInventories.containsKey(player.getUniqueId()) && !main.getGuiManager().isInCustomGui(player.getUniqueId())) {
+    		ItemStack[] oldInv = playerInventories.get(player.getUniqueId()), newInv = event.getInventory().getContents();
+    		for(int i = 0; i < oldInv.length; i++) {
+    			
+    		}
+    	}
+		
+		if(event.getReason().equals(InventoryCloseEvent.Reason.PLAYER)) {
+			main.getGuiManager().getCustomGuiBoolean().put(player.getUniqueId(), false);	
+		}
     }
 }

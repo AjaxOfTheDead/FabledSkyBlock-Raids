@@ -1,13 +1,15 @@
-package me.ResurrectAjax.Commands.Raid;
+package me.ResurrectAjax.Commands.RaidParty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
+import me.ResurrectAjax.Commands.RaidHelp.RaidPartyHelp;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
@@ -24,6 +26,7 @@ public class RaidPartyCommands extends CommandInterface{
 	
 	public RaidPartyCommands(Main main) {
 		this.main = main;
+		raidManager = main.getRaidManager();
 		methods = main.getRaidMethods();
 		guiManager = main.getGuiManager();
 		
@@ -42,50 +45,37 @@ public class RaidPartyCommands extends CommandInterface{
 		return "Open the RaidParty GUI";
 	}
 
-	public String[] getArguments() {
-		String[] arguments = new String[] {"invite", "kick", "chat", "accept", "deny", "help"};
+	public String[] getArguments(UUID uuid) {
+		String[] arguments = new String[subcommands.size()];
+		for(int i = 0; i < subcommands.size(); i++) {
+			arguments[i] = subcommands.get(i).getName();
+		}
 		return arguments;
 	}
 
 	public void perform(Player player, String[] args) {
 		FileConfiguration configLoad = main.getLanguage();
 		String cmdName = "";
-		for(CommandInterface command : subcommands) {
-			if(command.getName().equalsIgnoreCase(args[0])) {
-				command.perform(player, args);
-				cmdName = command.getName();
+		if(args.length > 0) {
+			for(CommandInterface command : subcommands) {
+				if(command.getName().equalsIgnoreCase(args[0])) {
+					command.perform(player, args);
+					cmdName = command.getName();
+				}
 			}
 		}
 		if(cmdName.equalsIgnoreCase("") && args.length > 0) {
-			player.sendMessage(methods.format(convertSyntax(getSyntax())));
+			player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
 		}
 		else if(args.length == 0) {
 			if(raidManager.getMembersParty(player.getUniqueId()) != null) {
-				RaidParty party = raidManager.getMembersParty(player.getUniqueId());
-				if(party.getLeader().equals(player.getUniqueId())) {
-					guiManager.partyLeaderGui1(player);	
-				}
-				else {
-					//member gui
-				}
+				guiManager.partyLeaderGui1(player, 0);	
+				
 			}
 			else {
-				player.sendMessage(methods.format(configLoad.getString("Raid.RaidParty.NoParty.Message")));
-				subcommands.get(3).perform(player, args);
+				player.sendMessage(RaidMethods.format(configLoad.getString("RaidParty.Error.NoParty.Message")));
 			}
 		}
-	}
-	
-	//replace the "%Syntax%" in the language.yml file
-	public String convertSyntax(String syntax) {
-		FileConfiguration configLoad = main.getLanguage();
-		String syntaxMsg = configLoad.getString("Command.Execute.BadSyntax.Message");
-		String newstr = syntaxMsg;
-		
-		if(newstr.contains("%Syntax%")) {
-			newstr = syntaxMsg.replace("%Syntax%", syntax + "");
-		}
-		return newstr;
 	}
 	
 	private void loadCommands() {
@@ -94,7 +84,11 @@ public class RaidPartyCommands extends CommandInterface{
 				new RaidPartyInvite(main, this),
 				new RaidPartyAccept(main),
 				new RaidPartyDeny(main),
-				new RaidHelp(main)
+				new RaidPartyLeave(main),
+				new RaidPartyKick(main),
+				new RaidPartyCancelInvite(main),
+				new RaidPartyHelp(main),
+				new RaidPartyExitGUI()
 				);
 	}
 
