@@ -49,23 +49,23 @@ public class BlockListeners implements Listener{
     public void onBlockBreak(BlockBreakEvent event) {
     	if(inSpawnZone(event)) {
     		event.setCancelled(true);
+    		return;
     	}
     	Player player = event.getPlayer();
     	RaidMethods raidMethods = main.getRaidMethods();
     	
     	Inventory blockInventory = null;
-    	if(event.getBlock().getState() instanceof Container) {
-        	blockInventory = ((Container) event.getBlock().getState()).getSnapshotInventory();	
-    	}
+    	if(event.getBlock().getState() instanceof Container) blockInventory = ((Container) event.getBlock().getState()).getSnapshotInventory();	
     	if(!raidMethods.getIslandRaider().isEmpty() && raidMethods.getIslandRaider().containsKey(player.getUniqueId())) {
     		IslandManager islandManager = main.getSkyBlock().getIslandManager();
     		UUID islandUUID = raidMethods.getIslandUUIDByLocation(raidMethods.getIslandRaider().get(player.getUniqueId()));
     		Island island = islandManager.getIslandByUUID(islandUUID);
     		
-    		if(island.isInBorder(event.getBlock().getLocation()) && !inSpawnZone(event)) {
+    		if(island.isInBorder(event.getBlock().getLocation())) {
     			ItemStack item = new ItemStack(event.getBlock().getType());
     			RaidParty party = main.getRaidManager().getMembersParty(player.getUniqueId());
     			party.addBrokenBlock(item);
+    			
     			if(event.getBlock().getState() instanceof Container) {
     				party.addContainerItems(item.getType(), blockInventory.getContents());
     			}

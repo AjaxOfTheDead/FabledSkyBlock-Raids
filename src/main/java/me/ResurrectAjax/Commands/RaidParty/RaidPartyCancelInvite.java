@@ -42,10 +42,10 @@ public class RaidPartyCancelInvite extends CommandInterface{
 		String[] playernames = new String[raidManager.getPartyInvites().get(uuid).size()];
 		int count = 0;
 		for(UUID player : raidManager.getPartyInvites().get(uuid)) {
-			if(!player.equals(uuid)) {
-				playernames[count] = Bukkit.getOfflinePlayer(player).getName();
-				count++;	
-			}
+			if(player.equals(uuid)) continue;
+			playernames[count] = Bukkit.getOfflinePlayer(player).getName();
+			count++;	
+			
 		}
 		return playernames;
 	}
@@ -56,19 +56,18 @@ public class RaidPartyCancelInvite extends CommandInterface{
 	}
 	
 	public void perform(Player player, String[] args) {
-		if(args.length == 2) {
-			if(Bukkit.getPlayer(args[1]) != null) {
-				Player receiver = Bukkit.getPlayer(args[1]);
-				FileConfiguration language = main.getLanguage();
-				
-				if(main.getRaidManager().getPartyInvites().get(player.getUniqueId()).contains(receiver.getUniqueId())) {
-					main.getRaidManager().getPartyInvites().get(player.getUniqueId()).remove(receiver.getUniqueId());
-					player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.Cancel.Canceled.Message")));
-				}
-				else {
-					player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.Cancel.NoInvite.Message")));	
-				}
-			}
+		if(args.length != 2) return;
+		if(Bukkit.getPlayer(args[1]) == null) return;
+		Player receiver = Bukkit.getPlayer(args[1]);
+		FileConfiguration language = main.getLanguage();
+		
+		if(!main.getRaidManager().getPartyInvites().get(player.getUniqueId()).contains(receiver.getUniqueId())) player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.Cancel.NoInvite.Message")));		
+		else {
+			main.getRaidManager().getPartyInvites().get(player.getUniqueId()).remove(receiver.getUniqueId());
+			player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.Cancel.Canceled.Message")));
+
 		}
+			
+		
 	}
 }

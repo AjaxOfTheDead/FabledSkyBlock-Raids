@@ -1,6 +1,7 @@
 package me.ResurrectAjax.Raid;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +21,8 @@ public class RaidParty {
 	private List<UUID> deadMembers = new ArrayList<UUID>();
 	private List<ItemStack> brokenBlocks = new ArrayList<ItemStack>();
 	private HashMap<Material, Integer> nonContainerBlocks = new HashMap<Material, Integer>();
+	
+    private HashMap<UUID, List<ItemStack>> stolenItems = new HashMap<UUID, List<ItemStack>>();
 	
 	private List<HashMap<Material, ItemStack[]>> containerItems = new ArrayList<HashMap<Material,  ItemStack[]>>();
 	
@@ -48,10 +51,9 @@ public class RaidParty {
 				nonContainerBlocks.put(item.getType(), amount+1);
 			}
 			else {
-				nonContainerBlocks.put(item.getType(), 1);
+				nonContainerBlocks.put(item.getType(), item.getAmount());
 			}
 		}
-		
 		
 	}
 	
@@ -153,4 +155,17 @@ public class RaidParty {
     	}
     	return onlineMembers;
     }
+
+	public HashMap<UUID, List<ItemStack>> getStolenItems() {
+		return stolenItems;
+	}
+
+	public void addStolenItems(UUID player, ItemStack item) {
+		if(stolenItems.containsKey(player)) {
+			stolenItems.get(player).add(item);
+		}
+		else {
+			stolenItems.put(player, new ArrayList<ItemStack>(Arrays.asList(item)));
+		}
+	}
 }

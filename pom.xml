@@ -133,10 +133,6 @@
     </pluginRepositories>
 
     <repositories>
-        <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-        </repository>
 
         <repository>
             <id>papermc</id>
@@ -177,6 +173,15 @@
             <scope>compile</scope>
         </dependency>
 
+		<!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+		<dependency>
+		    <groupId>org.mockito</groupId>
+		    <artifactId>mockito-core</artifactId>
+		    <version>4.3.1</version>
+		    <scope>test</scope>
+		</dependency>
+
+
         <dependency>
             <groupId>com.destroystokyo.paper</groupId>
             <artifactId>paper-api</artifactId>
@@ -207,7 +212,7 @@
         <dependency>
             <groupId>com.songoda</groupId>
             <artifactId>SongodaCore</artifactId>
-            <version>LATEST</version>
+            <version>2.6.11</version>
             <scope>compile</scope>
         </dependency>
 
@@ -282,7 +287,7 @@
         <dependency>
         	<groupId>com.songoda</groupId>
         	<artifactId>skyblock</artifactId>
-        	<version>2.3.29</version>
+        	<version>2.4.0</version>
         </dependency>
     </dependencies>
 </project>

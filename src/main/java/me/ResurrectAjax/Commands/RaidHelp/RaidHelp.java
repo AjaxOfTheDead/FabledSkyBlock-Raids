@@ -10,6 +10,11 @@ import org.bukkit.entity.Player;
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 import me.ResurrectAjax.Main.Main;
 
+/**
+ * Class for getting a list of raid commands
+ * 
+ * @author ResurrectAjax
+ * */
 public class RaidHelp extends RaidHelpParent{
 	public RaidHelp(Main main) {
 		super(main);
@@ -45,7 +50,6 @@ public class RaidHelp extends RaidHelpParent{
 			
 			switch(helpCommand.getName().toLowerCase()) {
 			case "raidparty":
-			case "raidsense":
 				message = ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "* " + ChatColor.RED + "/" + helpCommand.getName() + " help" + ChatColor.GRAY + " - " + ChatColor.WHITE + ChatColor.ITALIC + "Get all the " + helpCommand.getName() + " commands.";
 				break;
 			default:

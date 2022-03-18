@@ -38,7 +38,7 @@ public class PlayerManager {
 		return item;
 	}
 	
-	public static ItemStack getPlayerHead(String name, int page) {
+	public static ItemStack getPlayerHead(String name) {
 		boolean isNewVersion = Arrays.stream(Material.values())
 				.map(Material::name).collect(Collectors.toList()).contains("PLAYER_HEAD");
 		
@@ -59,7 +59,6 @@ public class PlayerManager {
 				lore.add(RaidMethods.format("&7Go to the next page"));
 				break;
 		}
-		lore.add(RaidMethods.format("&7" + page));
 		meta.setLore(lore);
 		
 		item.setItemMeta(meta);

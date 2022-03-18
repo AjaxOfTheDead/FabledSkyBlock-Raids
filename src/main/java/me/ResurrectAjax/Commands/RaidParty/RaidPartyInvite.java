@@ -23,11 +23,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 public class RaidPartyInvite extends CommandInterface{
 	private RaidMethods methods;
 	private Main main;
-	private FileConfiguration language;
 	public RaidPartyInvite(Main main, RaidPartyCommands partycommand) {
 		this.main = main;
 		methods = main.getRaidMethods();
-		language = main.getLanguage();
 	}
 
 
@@ -50,17 +48,29 @@ public class RaidPartyInvite extends CommandInterface{
 		String[] playernames = new String[PlayerManager.getOnlineIslandMembers(PlayerManager.getPlayersIsland(uuid)).size()-1];
 		int count = 0;
 		for(UUID players : PlayerManager.getOnlineIslandMembers(PlayerManager.getPlayersIsland(uuid))) {
-			if(!players.equals(uuid)) {
-				playernames[count] = Bukkit.getPlayer(players).getName();
-				count++;	
-			}
+			if(players.equals(uuid)) continue;
+			playernames[count] = Bukkit.getPlayer(players).getName();
+			count++;
 		}
 		return playernames;
 	}
 
 
 	public void perform(Player player, String[] args) {
-		if(args.length == 2 && Bukkit.getPlayer(args[1]) != null && !player.getUniqueId().equals(Bukkit.getPlayer(args[1]).getUniqueId())) {
+		FileConfiguration language = main.getLanguage();
+		if(args.length != 2) {
+			player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
+			return;
+		}
+		else if(Bukkit.getPlayer(args[1]) == null) {
+			player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.PlayerNotExist.Message")));
+			return;
+		}
+		else if(player.getUniqueId().equals(Bukkit.getPlayer(args[1]).getUniqueId())) {
+			player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.SelfInvite.Message")));
+			return;
+		}
+		else {
 			Player receiver = Bukkit.getPlayer(args[1]);
 			Island senderIsland = PlayerManager.getPlayersIsland(player.getUniqueId());
 			
@@ -69,7 +79,8 @@ public class RaidPartyInvite extends CommandInterface{
 				if(party == null || !party.getMembers().contains(receiver.getUniqueId())) {
 					//create invite if player hasn't sent an invite yet
 					HashMap<UUID, List<UUID>> playerInvites = main.getRaidManager().getPartyInvites();
-					if(playerInvites.get(player.getUniqueId()) == null || !playerInvites.get(player.getUniqueId()).contains(receiver.getUniqueId())) {
+					if(playerInvites.get(player.getUniqueId()) != null && playerInvites.get(player.getUniqueId()).contains(receiver.getUniqueId())) player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.AlreadySent.Message")));
+					else {
 						List<UUID> invites = playerInvites.get(player.getUniqueId()) != null ? playerInvites.get(player.getUniqueId()) : new ArrayList<UUID>();
 						invites.add(receiver.getUniqueId());
 						main.getRaidManager().getPartyInvites().put(player.getUniqueId(), invites);
@@ -96,36 +107,17 @@ public class RaidPartyInvite extends CommandInterface{
 						    public void run() {
 						    	//if player hasn't accepted, expire the invite
 						    	HashMap<UUID, List<UUID>> partyInvites = main.getRaidManager().getPartyInvites();
-						        if(partyInvites.containsKey(player.getUniqueId()) && partyInvites.get(player.getUniqueId()).contains(receiver.getUniqueId())) {
-						        	player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.Expired.Message")));
-						        	main.getRaidManager().getPartyInvites().get(player.getUniqueId()).remove(receiver.getUniqueId());
-						        }
+						        if(!partyInvites.containsKey(player.getUniqueId()) || !partyInvites.get(player.getUniqueId()).contains(receiver.getUniqueId())) return;
+						        player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.Expired.Message")));
+					        	main.getRaidManager().getPartyInvites().get(player.getUniqueId()).remove(receiver.getUniqueId());
 						    }
 						}.runTaskTimer(main, 20*300, 20*300);
 					}
-					else {
-						player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.AlreadySent.Message")));
-					}
 				}
-				else if(party.getMembers().contains(receiver.getUniqueId())){
-					player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.AlreadyInParty.Message")));
-				}
+				else if(party.getMembers().contains(receiver.getUniqueId())) player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.AlreadyInParty.Message")));
 			}
-			else if(PlayerManager.getIslandMembers(senderIsland).contains(receiver.getUniqueId())){
-				player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.PlayerNotOnline.Message")));
-			}
-			else {
-				player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.PlayerNotAnIslandMember.Message")));
-			}
-		}
-		else if(args.length != 2) {
-			player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
-		}
-		else if(Bukkit.getPlayer(args[1]) == null) {
-			player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.PlayerNotExist.Message")));
-		}
-		else if(player.getUniqueId().equals(Bukkit.getPlayer(args[1]).getUniqueId())) {
-			player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Send.SelfInvite.Message")));
+			else if(PlayerManager.getIslandMembers(senderIsland).contains(receiver.getUniqueId())) player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.PlayerNotOnline.Message")));
+			else player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.PlayerNotAnIslandMember.Message")));
 		}
 		
 	}

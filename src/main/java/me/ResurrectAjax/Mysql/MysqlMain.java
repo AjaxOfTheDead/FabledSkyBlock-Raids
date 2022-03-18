@@ -20,7 +20,7 @@ public class MysqlMain extends Database{
         dbname = plugin.getConfig().getString("SQLite.SkyBlock-RezAjax", "SkyBlock-RezAjax"); // Set the database name here e.g player_kills
     }
 	
-    public String SQLiteCreateSpawnZonesTable = "CREATE TABLE IF NOT EXISTS SpawnZones (" + // make sure to put your table name in here too.
+    private String SQLiteCreateSpawnZonesTable = "CREATE TABLE IF NOT EXISTS SpawnZones (" + // make sure to put your table name in here too.
     		"`uuid` varchar(32)," +
     		"`pos1` varchar(6) NOT NULL," + // This creates the different colums you will save data too. varchar(32) Is a string, int = integer
             "`pos2` varchar(6) NOT NULL," +
@@ -28,19 +28,19 @@ public class MysqlMain extends Database{
             "`world` varchar(32) NOT NULL" +
             ");"; // we can search by player, and get kills and total. If you some how were searching kills it would provide total and player.
     
-    public String SQLiteCreateStructuresTable = "CREATE TABLE IF NOT EXISTS Structures (" + // make sure to put your table name in here too.
+    private String SQLiteCreateStructuresTable = "CREATE TABLE IF NOT EXISTS Structures (" + // make sure to put your table name in here too.
     		"`name` varchar(32)," +
     		"`pos1` varchar(6) NOT NULL," + // This creates the different colums you will save data too. varchar(32) Is a string, int = integer
             "`pos2` varchar(6) NOT NULL" +
             ");"; // we can search by player, and get kills and total. If you some how were searching kills it would provide total and player.
     
-    public String SQLiteCreateIslandsTable = "CREATE TABLE IF NOT EXISTS Islands (" + // make sure to put your table name in here too.
+    private String SQLiteCreateIslandsTable = "CREATE TABLE IF NOT EXISTS Islands (" + // make sure to put your table name in here too.
     		"`uuid` varchar(32)," +
     		"`time` bigint(20) NOT NULL," +
     		"`raidsense` float(24) NOT NULL" + // This creates the different colums you will save data too. varchar(32) Is a string, int = integer
             ");"; // we can search by player, and get kills and total. If you some how were searching kills it would provide total and player.
     
-    public String SQLiteCreateRaidsTable = 
+    private String SQLiteCreateRaidsTable = 
     		"create table if not exists Raids(" + 
 			"raidID INTEGER PRIMARY KEY AUTOINCREMENT, " +
     		"partyID int not null, " +
@@ -48,7 +48,7 @@ public class MysqlMain extends Database{
 			"islandUUID varchar(32) not null " +
 			");";
     
-    public String SQLiteCreatePartiesTable = 
+    private String SQLiteCreatePartiesTable = 
     		"create table if not exists Parties(" + 
 			"partyID int not null, " +
 			"playerUUID varchar(32) not null, " +
@@ -56,7 +56,7 @@ public class MysqlMain extends Database{
 			"primary key(partyID, playerUUID)" +
 			");";
     
-    public String SQLiteCreateBlocksTable = 
+    private String SQLiteCreateBlocksTable = 
     		"create table if not exists Blocks("
     		+ "blockID INTEGER PRIMARY KEY AUTOINCREMENT, "
     		+ "raidID int not null, "
@@ -66,7 +66,7 @@ public class MysqlMain extends Database{
     		+ "foreign key(raidID) references Raids(raidID) on delete cascade"
     		+ ");";
     
-    public String SQLiteCreateItemsTable = 
+    private String SQLiteCreateItemsTable = 
     		"create table if not exists Items("
     		+ "itemID INTEGER PRIMARY KEY AUTOINCREMENT, "
     		+ "blockID int not null, "

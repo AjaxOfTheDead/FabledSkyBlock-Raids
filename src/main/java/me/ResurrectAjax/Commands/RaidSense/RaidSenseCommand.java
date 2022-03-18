@@ -44,10 +44,9 @@ public class RaidSenseCommand extends CommandInterface{
 		String[] playerNames = new String[Bukkit.getOnlinePlayers().size()-1];
 		int count = 0;
 		for(Player player : Bukkit.getOnlinePlayers()) {
-			if(!player.getUniqueId().equals(uuid)) {
-				playerNames[count] = player.getName();	
-				count++;
-			}
+			if(player.getUniqueId().equals(uuid)) continue;
+			playerNames[count] = player.getName();	
+			count++;
 		}
 		return playerNames;
 	}
@@ -68,10 +67,16 @@ public class RaidSenseCommand extends CommandInterface{
 			player.sendMessage(format(message, player.getUniqueId()));
 			break;
 		case 1:
-			if(Bukkit.getOfflinePlayer(args[0]) != null || Bukkit.getPlayer(args[0]) != null) {
-				UUID player2UUID = Bukkit.getPlayer(args[0]) != null ? Bukkit.getPlayer(args[0]).getUniqueId() : Bukkit.getOfflinePlayer(args[0]).getUniqueId();
-				player.sendMessage(format(message, player2UUID));
+			if(Bukkit.getOfflinePlayer(args[0]) != null && Bukkit.getPlayer(args[0]) != null) {
+				player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.PlayerNotExist.Message")));
+				break;
 			}
+			if(PlayerManager.getPlayersIsland(Bukkit.getOfflinePlayer(args[0]).getUniqueId()) == null || PlayerManager.getPlayersIsland(Bukkit.getPlayer(args[0]).getUniqueId()) == null) {
+				player.sendMessage(RaidMethods.format(language.getString("RaidSense.NoIsland.Message")));
+				return;
+			}
+			UUID player2UUID = Bukkit.getPlayer(args[0]) != null ? Bukkit.getPlayer(args[0]).getUniqueId() : Bukkit.getOfflinePlayer(args[0]).getUniqueId();
+			player.sendMessage(format(message, player2UUID));
 			break;
 		default:
 			player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
@@ -83,14 +88,13 @@ public class RaidSenseCommand extends CommandInterface{
 	private String format(String str, UUID player) {
 		String nStr = str;
 		for(String format : RaidMethods.FORMATS) {
-			if(str.contains(format)) {
-				switch(format) {
-				case "%RaidSense%":
-					UUID islandUUID = PlayerManager.getIslandUUIDByMember(player);
-					Island island = main.getSkyBlock().getIslandManager().getIslandByUUID(islandUUID);
-					nStr = RaidMethods.format(str, main.getFastDataAccess().getRaidSense(island.getOwnerUUID()) + "");
-					break;
-				}
+			if(!str.contains(format)) continue;
+			switch(format) {
+			case "%RaidSense%":
+				UUID islandUUID = PlayerManager.getIslandUUIDByMember(player);
+				Island island = main.getSkyBlock().getIslandManager().getIslandByUUID(islandUUID);
+				nStr = RaidMethods.format(str, main.getFastDataAccess().getRaidSense(island.getOwnerUUID()) + "");
+				break;
 			}
 		}
 		return RaidMethods.format(nStr);

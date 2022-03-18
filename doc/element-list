@@ -1,0 +1,16 @@
+me.ResurrectAjax.Commands.Admin
+me.ResurrectAjax.Commands.Managers
+me.ResurrectAjax.Commands.Raid
+me.ResurrectAjax.Commands.RaidHelp
+me.ResurrectAjax.Commands.RaidHistory
+me.ResurrectAjax.Commands.RaidParty
+me.ResurrectAjax.Commands.RaidSense
+me.ResurrectAjax.Listeners
+me.ResurrectAjax.Main
+me.ResurrectAjax.Mysql
+me.ResurrectAjax.Playerdata
+me.ResurrectAjax.Raid
+me.ResurrectAjax.Raid.ItemStorage
+me.ResurrectAjax.RaidGUI
+me.ResurrectAjax.RaidSense
+me.ResurrectAjax.Utils.Structure

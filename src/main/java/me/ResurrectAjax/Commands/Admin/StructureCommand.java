@@ -33,9 +33,20 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 
+/**
+ * Class for creating structures (adjusted copy of songoda StructureCommand)
+ * 
+ * @author ResurrectAjax
+ * */
 public class StructureCommand extends SubCommand {
 	private Main main;
 	
+	/**
+	 * Constructor of the class
+	 * @param player player who sent the command
+	 * @param args arguments of the command
+	 * @param main instance of the {@link me.ResurrectAjax.Main.Main} class
+	 * */
 	public StructureCommand(Player player, String[] args, Main main) {
 		this.main = main;
 		
@@ -238,7 +249,7 @@ public class StructureCommand extends SubCommand {
                             HashMap<String, Integer> relPositions = new HashMap<>();
                             relPositions = StructureUtil.getRelativePosition(new Location[] {spawnPosition1Location, spawnPosition2Location}, player.getLocation());
                             db.setStructure(args[1], relPositions.get("pos1X") + ":" + relPositions.get("pos1Z"), relPositions.get("pos2X") + ":" + relPositions.get("pos2Z"));
-                            fdb.putStructure(args[1], spawnPosition1Location, spawnPosition2Location);
+                            fdb.putStructure(args[1], relPositions.get("pos1X"), relPositions.get("pos1Z"), relPositions.get("pos2X"), relPositions.get("pos2Z"));
 
                             messageManager.sendMessage(player,
                                     configLoad

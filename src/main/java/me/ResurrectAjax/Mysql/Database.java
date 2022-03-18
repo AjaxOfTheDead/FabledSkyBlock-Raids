@@ -324,7 +324,7 @@ public abstract class Database {
             conn = getSQLConnection();
             
             String stmt = "insert into Parties (partyID, playerUUID, leaderUUID) values";
-            String selectLastID = "(SELECT MAX(partyID)+1 as lastID FROM Parties)";
+            String selectLastID = "(SELECT COALESCE(MAX(partyID)+1, 1) FROM Parties)";
             
             for(UUID playerUUID : party.getMembers()) {
             	if(playerUUID.equals(party.getMembers().get(party.getMembers().size()-1))) {
@@ -455,7 +455,7 @@ public abstract class Database {
             
         	RaidHistoryMap map = Main.getInstance().getRaidHistoryMap();
             while(rs.next()) {
-            	map.addBlocks(rs.getInt(1), new String[] {rs.getInt(2) + "", rs.getString(3), rs.getInt(4) + "", (rs.getInt(5) > 0) + ""});
+            	map.addBlock(rs.getInt(1), new String[] {rs.getInt(2) + "", rs.getString(3), rs.getInt(4) + "", (rs.getInt(5) > 0) + ""});
             }
             
             
@@ -550,7 +550,7 @@ public abstract class Database {
                 count++;
             }
             stmt += ";";
-
+            
             ps = conn.prepareStatement(stmt);
             
             ps.executeUpdate();

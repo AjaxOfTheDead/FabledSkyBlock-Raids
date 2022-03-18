@@ -43,9 +43,7 @@ public class RaidPartyKick extends RaidPartyLeave{
 		if(main.getRaidManager().getMembersParty(uuid) != null) {
 			List<String> playerNames = new ArrayList<String>();
 			for(UUID member : main.getRaidManager().getMembersParty(uuid).getMembers()) {
-				if(!member.equals(uuid)) {
-					playerNames.add(Bukkit.getOfflinePlayer(member).getName());	
-				}
+				if(!member.equals(uuid)) playerNames.add(Bukkit.getOfflinePlayer(member).getName());	
 			}
 			String[] names = new String[playerNames.size()];
 			for(int i = 0; i < playerNames.size(); i++) {
@@ -60,27 +58,26 @@ public class RaidPartyKick extends RaidPartyLeave{
 		FileConfiguration language = main.getLanguage();
 		RaidManager raidManager = main.getRaidManager();
 		
-		if(args.length == 2) {
-			UUID memberUUID = null;
-			for(UUID memberID : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
-				OfflinePlayer member = Bukkit.getOfflinePlayer(memberID);
-				if(member.getName().equalsIgnoreCase(args[1])) {
-					memberUUID = memberID;
-				}
-			}
-			if(memberUUID != null) {
-				for(UUID memberID : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
-					if(Bukkit.getPlayer(memberID) != null) {
-						Player member = Bukkit.getPlayer(memberID);
-						member.sendMessage(RaidMethods.format(language.getString("RaidParty.Kick.Message"), Bukkit.getOfflinePlayer(memberUUID).getName()));
-					}
-				}
-				super.removeFromParty(Bukkit.getOfflinePlayer(memberUUID), args);
-			}
-			else {
-				player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.NotInParty.Message")));
-			}
+		if(args.length != 2) return;
+		UUID memberUUID = null;
+		for(UUID memberID : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
+			OfflinePlayer member = Bukkit.getOfflinePlayer(memberID);
+			if(member.getName().equalsIgnoreCase(args[1])) memberUUID = memberID;
 		}
+		if(memberUUID == null) {
+			player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.NotInParty.Message")));
+			return;
+		}
+
+		for(UUID memberID : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
+			if(Bukkit.getPlayer(memberID) == null) continue;
+			Player member = Bukkit.getPlayer(memberID);
+			member.sendMessage(RaidMethods.format(language.getString("RaidParty.Kick.Message"), Bukkit.getOfflinePlayer(memberUUID).getName()));
+			
+		}
+		super.removeFromParty(Bukkit.getOfflinePlayer(memberUUID), args);
+			
+		
 		
 	}
 

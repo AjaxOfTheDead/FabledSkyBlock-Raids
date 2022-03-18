@@ -55,27 +55,24 @@ public class RaidPartyLeave extends CommandInterface{
 		RaidManager raidManager = main.getRaidManager();
 		FileConfiguration language = main.getLanguage();
 		
-		if(raidManager.getMembersParty(player.getUniqueId()) != null) {
-			for(UUID memberID : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
-				if(Bukkit.getPlayer(memberID) != null) {
-					Player member = Bukkit.getPlayer(memberID);
-					member.sendMessage(RaidMethods.format(language.getString("RaidParty.Leave.Message"), player.getName()));
-				}
-			}
-			removeFromParty(player, args);	
-		}
-		else {
+		if(raidManager.getMembersParty(player.getUniqueId()) == null) {
 			player.sendMessage(RaidMethods.format(language.getString("RaidParty.Error.NoParty.Message")));
+			return;	
 		}
+		for(UUID memberID : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
+			if(Bukkit.getPlayer(memberID) == null) continue;
+			Player member = Bukkit.getPlayer(memberID);
+			member.sendMessage(RaidMethods.format(language.getString("RaidParty.Leave.Message"), player.getName()));
+		}
+		removeFromParty(player, args);
 		
 	}
 	
 	public void removeFromParty(OfflinePlayer player, String[] args) {
 		RaidManager raidManager = main.getRaidManager();
 		
-		if(raidManager.getMembersParty(player.getUniqueId()) != null) {
-			RaidParty party = raidManager.getMembersParty(player.getUniqueId());
-			party.removeMember(player.getUniqueId());
-		}
+		if(raidManager.getMembersParty(player.getUniqueId()) == null) return;
+		RaidParty party = raidManager.getMembersParty(player.getUniqueId());
+		party.removeMember(player.getUniqueId());
 	}
 }

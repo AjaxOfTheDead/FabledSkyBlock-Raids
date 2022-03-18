@@ -87,7 +87,6 @@ public class ItemStorage {
 	}
 	
 	public void restoreItems(Player player) {
-		
 		player.getInventory().clear();
 		player.getInventory().setContents(inventory.get(player.getUniqueId()));
 		player.getInventory().setArmorContents(armor.get(player.getUniqueId()));

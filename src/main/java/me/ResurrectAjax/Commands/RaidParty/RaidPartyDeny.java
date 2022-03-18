@@ -41,10 +41,9 @@ public class RaidPartyDeny extends CommandInterface{
 		String[] playernames = new String[raidManager.getPartyInvites().keySet().size()];
 		int count = 0;
 		for(UUID player : raidManager.getPartyInvites().keySet()) {
-			if(raidManager.getPartyInvites().get(player).contains(uuid)) {
-				playernames[count] = Bukkit.getOfflinePlayer(player).getName();
-				count++;	
-			}
+			if(!raidManager.getPartyInvites().get(player).contains(uuid)) continue;
+			playernames[count] = Bukkit.getOfflinePlayer(player).getName();
+			count++;	
 		}
 		return playernames;
 	}
@@ -55,20 +54,18 @@ public class RaidPartyDeny extends CommandInterface{
 	}
 
 	public void perform(Player player, String[] args) {
-		if(args.length == 2) {
-			if(Bukkit.getPlayer(args[1]) != null) {
-				Player receiver = Bukkit.getPlayer(args[1]);
-				FileConfiguration language = main.getLanguage();
-				
-				if(main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).contains(player.getUniqueId())) {
-					main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).remove(player.getUniqueId());
-					receiver.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.Denied.Message"), player.getName()));	
-				}
-				else {
-					player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.NoInvite.Message")));	
-				}
-			}
+		if(args.length != 2) return;
+		if(Bukkit.getPlayer(args[1]) == null) return;
+		Player receiver = Bukkit.getPlayer(args[1]);
+		FileConfiguration language = main.getLanguage();
+		
+		if(!main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).contains(player.getUniqueId())) player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.NoInvite.Message")));	
+		else {
+			main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).remove(player.getUniqueId());
+			receiver.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.Denied.Message"), player.getName()));
 		}
+		
+		
 		
 	}
 }

@@ -13,10 +13,19 @@ import me.ResurrectAjax.Commands.Managers.CommandManager;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Raid.RaidMethods;
 
+/**
+ * Frame of the all help lists
+ * 
+ * @author ResurrectAjax
+ * */
 public class RaidHelpParent extends CommandInterface{
 	protected Main main;
 	private int helpSize = 0;
 	
+	/**
+	 * Constructor of RaidHelpParent class<br>
+	 * @param main instance of the {@link me.ResurrectAjax.Main.Main} class
+	 * */
 	public RaidHelpParent(Main main) {
 		this.main = main;
 	}
@@ -54,33 +63,43 @@ public class RaidHelpParent extends CommandInterface{
 		return null;
 	}
 
-
+	/**
+	 * Empty function, will never get called
+	 * */
 	public void perform(Player player, String[] args) {
 
 		
 	}
 	
+	/**
+	 * Function for performing help command
+	 * @param player player who sent the command
+	 * @param name name of the sent command
+	 * @param args array of arguments the player sent
+	 * */
 	public void perform(Player player, String name, String[] args) {
 		
-		if(args.length == 2) {
-			if(RaidMethods.isInteger(args[1])) {
-				if(Integer.parseInt(args[1]) == 0) {
-					createList(player, name, 1);
-				}
-				else {
-					createList(player, name, Integer.parseInt(args[1]));
-				}
-			}
-			else {
-				createList(player, name, 1);	
-			}
-		}
-		else if(args.length == 1){
+		switch(args.length) {
+		case 1:
 			createList(player, name, 1);
+			break;
+		case 2:
+			if(RaidMethods.isInteger(args[1])) {
+				if(Integer.parseInt(args[1]) == 0) createList(player, name, 1);
+				else createList(player, name, Integer.parseInt(args[1]));
+			}
+			else createList(player, name, 1);
+			break;
 		}
 		
 	}
 	
+	/**
+	 * Function for creating a help list
+	 * @param player player who sent the command
+	 * @param command name of the sent command
+	 * @param page list page number
+	 * */
 	public void createList(Player player, String command, int page) {
 		CommandManager commandManager = main.getCommandManager();
 		List<String> commandList = new ArrayList<String>();
@@ -95,9 +114,7 @@ public class RaidHelpParent extends CommandInterface{
 				blacklistNames.add(blacklistItem);
 			}
 			for(CommandInterface subcommand : commands.getSubCommands()) {
-				if(blacklistNames.contains(subcommand.getName())) {
-					subcommands.remove(subcommand);
-				}
+				if(blacklistNames.contains(subcommand.getName())) subcommands.remove(subcommand);
 			}
 			subcommands.add(commandManager.getCommandByName(command));
 			for(CommandInterface subcommand : subcommands) {
@@ -119,9 +136,7 @@ public class RaidHelpParent extends CommandInterface{
 		player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Raid" + ChatColor.WHITE + " - " + ChatColor.YELLOW + command);
 		
 		for(int i = (page * nr)-nr; i < page * nr; i++) {
-			if(commandList.size() > i) {
-				player.sendMessage(commandList.get(i));	
-			}
+			if(commandList.size() > i) player.sendMessage(commandList.get(i));	
 		}
 		
 		if(page > helpSize) {

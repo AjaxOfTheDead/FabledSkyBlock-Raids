@@ -1,7 +1,10 @@
 package me.ResurrectAjax.Main;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -47,6 +50,10 @@ import me.ResurrectAjax.RaidGUI.GuiManager;
 import me.ResurrectAjax.RaidSense.RaidSenseListener;
 import me.ResurrectAjax.RaidSense.RaidSenseTime;
 
+/**
+ * Main class
+ * @author ResurrectAjax
+ * */
 public class Main extends JavaPlugin{
 	private static Main INSTANCE;
 	
@@ -82,6 +89,10 @@ public class Main extends JavaPlugin{
     }
 	
 	public void onEnable() {
+		onEnableExecute();
+	}
+	
+	public void onEnableExecute() {
 		
 		//create config.yml
 		saveDefaultConfig();
@@ -98,19 +109,6 @@ public class Main extends JavaPlugin{
 		//load all the classes
 		loadFiles();
 		//classes
-
-		
-		//load the Listeners
-		getServer().getPluginManager().registerEvents(new CommandListener(skyblock, this), this);
-		getServer().getPluginManager().registerEvents(new BlockListeners(this), this);
-		getServer().getPluginManager().registerEvents(new InteractListeners(this), this);
-		getServer().getPluginManager().registerEvents(new IslandListener(this), this);
-		getServer().getPluginManager().registerEvents(new RaidListener(this), this);
-		getServer().getPluginManager().registerEvents(new JoinListeners(this), this);
-		getServer().getPluginManager().registerEvents(new MoveListeners(skyblock), this);
-		getServer().getPluginManager().registerEvents(new GuiClickEvent(this), this);
-		getServer().getPluginManager().registerEvents(new RaidSenseListener(this), this);
-		//Listeners
 		
 		
 		//unregister listeners
@@ -124,6 +122,20 @@ public class Main extends JavaPlugin{
 			}
 		}
 		//unregistered listeners
+		
+		
+		//load the Listeners
+		getServer().getPluginManager().registerEvents(new CommandListener(skyblock, this), this);
+		getServer().getPluginManager().registerEvents(new BlockListeners(this), this);
+		getServer().getPluginManager().registerEvents(new InteractListeners(this), this);
+		getServer().getPluginManager().registerEvents(new IslandListener(this), this);
+		getServer().getPluginManager().registerEvents(new RaidListener(this), this);
+		getServer().getPluginManager().registerEvents(new JoinListeners(this), this);
+		getServer().getPluginManager().registerEvents(new MoveListeners(skyblock), this);
+		getServer().getPluginManager().registerEvents(new GuiClickEvent(this), this);
+		getServer().getPluginManager().registerEvents(new RaidSenseListener(this), this);
+		//Listeners
+		
 		
 		//set the tabCompleter
 		for(CommandInterface command : commandManager.getCommands()) {
@@ -155,6 +167,10 @@ public class Main extends JavaPlugin{
 	}
 	
 	public void onDisable() {
+		onDisableExecute();
+	}
+	
+	public void onDisableExecute() {
 		for(Player player : Bukkit.getOnlinePlayers()) {
 			raidMethods.onRaiderQuit(player);
 			raidMethods.onSpectatorQuit(player);
@@ -198,7 +214,7 @@ public class Main extends JavaPlugin{
 									}
 									break;
 								default:
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Command.Execute.NotExist.Message")));
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Command.Error.NotExist.Message")));
 									break;
 							}
 						}
@@ -214,7 +230,7 @@ public class Main extends JavaPlugin{
 			}
 		}
 		else {
-			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Command.Execute.ByConsole.Message")));
+			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', language.getString("Command.Error.ByConsole.Message")));
 		}
 		return true;
 	}
@@ -292,9 +308,23 @@ public class Main extends JavaPlugin{
     	return historymap;
     }
     //ResurrectAjax getters
-	
-	
-	
+    
+    public void reload() {
+    	List<File> fileList = new ArrayList<File>(Arrays.asList(
+    			new File(this.getDataFolder(), "config.yml"),
+    			new File(this.getDataFolder(), "language.yml"),
+    			new File(this.getDataFolder(), "gui.yml")
+    			));
+    	
+    	for(File file : fileList) {
+        	fileManager.unloadConfig(file);	
+    	}
+    	
+        config = this.getFileManager().getConfig(fileList.get(0)).getFileConfiguration();
+        language = this.getFileManager().getConfig(fileList.get(1)).getFileConfiguration();
+        guiConfig = this.getFileManager().getConfig(fileList.get(2)).getFileConfiguration();
+    }
+    
 	public void loadFiles() {
 		INSTANCE = this;
 		

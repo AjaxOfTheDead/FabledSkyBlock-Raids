@@ -9,6 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
+import me.ResurrectAjax.Commands.Raid.ExitGui;
 import me.ResurrectAjax.Commands.RaidHelp.RaidPartyHelp;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Raid.RaidManager;
@@ -56,26 +57,18 @@ public class RaidPartyCommands extends CommandInterface{
 	public void perform(Player player, String[] args) {
 		FileConfiguration configLoad = main.getLanguage();
 		String cmdName = "";
-		if(args.length > 0) {
+		if(args.length <= 0) {
 			for(CommandInterface command : subcommands) {
-				if(command.getName().equalsIgnoreCase(args[0])) {
-					command.perform(player, args);
-					cmdName = command.getName();
-				}
+				if(!command.getName().equalsIgnoreCase(args[0])) continue;
+				command.perform(player, args);
+				cmdName = command.getName();
 			}
 		}
-		if(cmdName.equalsIgnoreCase("") && args.length > 0) {
-			player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
-		}
-		else if(args.length == 0) {
-			if(raidManager.getMembersParty(player.getUniqueId()) != null) {
-				guiManager.partyLeaderGui1(player, 0);	
-				
-			}
-			else {
-				player.sendMessage(RaidMethods.format(configLoad.getString("RaidParty.Error.NoParty.Message")));
-			}
-		}
+		if(cmdName.equalsIgnoreCase("") && args.length > 0) player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
+		else if(args.length != 0) return;
+		if(raidManager.getMembersParty(player.getUniqueId()) != null) guiManager.partyLeaderGui1(player, 0);	
+		else player.sendMessage(RaidMethods.format(configLoad.getString("RaidParty.Error.NoParty.Message")));
+		
 	}
 	
 	private void loadCommands() {
@@ -88,7 +81,7 @@ public class RaidPartyCommands extends CommandInterface{
 				new RaidPartyKick(main),
 				new RaidPartyCancelInvite(main),
 				new RaidPartyHelp(main),
-				new RaidPartyExitGUI()
+				new ExitGui()
 				);
 	}
 

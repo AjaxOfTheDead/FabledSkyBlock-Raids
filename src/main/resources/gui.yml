@@ -80,7 +80,7 @@ Raid:
         Back:
           Material: 'BARRIER'
           ItemSlot: 0
-          RunCommand: 'raidhistory'
+          RunCommand: 'raidhistory exitgui'
           Name: '&c&lBack'
           Lore:
           - '&7Go back to the'

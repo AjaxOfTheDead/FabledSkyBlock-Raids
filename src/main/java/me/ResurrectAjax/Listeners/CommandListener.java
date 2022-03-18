@@ -67,7 +67,7 @@ public class CommandListener implements Listener{
 						event.setCancelled(true);
 						
 						
-						switch(subcmd.getName()) {
+						switch(subcmd.getName().toLowerCase()) {
 							case "structure":
 								new StructureCommand(event.getPlayer(), subargs.toArray(new String[subargs.size()]), main);
 								break;

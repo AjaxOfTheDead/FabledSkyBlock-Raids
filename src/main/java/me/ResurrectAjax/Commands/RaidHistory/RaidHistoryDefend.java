@@ -8,9 +8,18 @@ import org.bukkit.entity.Player;
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 import me.ResurrectAjax.Main.Main;
 
+/**
+ * Class for getting the defending raid history of an island
+ * @author ResurrectAjax
+ * */
 public class RaidHistoryDefend extends CommandInterface{
 
 	private Main main;
+	
+	/**
+	 * Constructor of RaidHistoryDefend class<br>
+	 * @param main instance of the {@link me.ResurrectAjax.Main.Main} class
+	 * */
 	public RaidHistoryDefend(Main main) {
 		this.main = main;
 	}

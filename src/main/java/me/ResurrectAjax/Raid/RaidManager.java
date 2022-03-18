@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -17,8 +18,6 @@ public class RaidManager {
 	private HashMap<UUID, Location> startPositions = new HashMap<UUID, Location>();
 	
 	private List<UUID> raidCommandsList = new ArrayList<UUID>();
-    
-	private RaidMethods raidMethods;
 	
 	private Main main;
 	
@@ -35,6 +34,9 @@ public class RaidManager {
 	}
 	
     public RaidBar addRaidBar(UUID uuid, RaidBar bar) {
+		if(!main.getRaidMethods().getIslandSpectator().isEmpty() && main.getRaidMethods().getIslandSpectator().containsKey(uuid)) {
+			main.getRaidMethods().exitRaidSpectator(Bukkit.getPlayer(uuid));	
+		}
     	raidBars.put(uuid, bar);
     	return bar;
     }
@@ -82,7 +84,7 @@ public class RaidManager {
     }
     
     public List<UUID> getRaidedIslandOwners() {
-    	raidMethods = main.getRaidMethods();
+    	RaidMethods raidMethods = main.getRaidMethods();
     	List<UUID> owners = new ArrayList<UUID>();
     	
     	owners.addAll(raidMethods.getRaidedIslands().values());

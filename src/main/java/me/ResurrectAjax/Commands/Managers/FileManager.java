@@ -35,7 +35,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import com.google.common.io.ByteStreams;
 
 import me.ResurrectAjax.Main.Main;
-
+/**
+ * Class for managing files (adjusted copy of songoda FileManager)
+ * 
+ * @author ResurrectAjax
+ * */
 public class FileManager {
 
     private final Main plugin;

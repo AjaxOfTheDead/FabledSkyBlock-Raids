@@ -17,11 +17,12 @@ C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\Resurre
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Main\TabCompletion.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidParty\RaidPartyDeny.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\RaidGUI\GuiClickEvent.java
-C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidHistory\RaidHistory.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Listeners\JoinListeners.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Listeners\InteractListeners.java
+C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\Raid\Reload.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Utils\Structure\SpawnZoneArea.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Raid\RaidTitles.java
+C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\RaidGUI\RaidInventoryHolder.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\RaidGUI\Gui.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidParty\RaidPartyCancelInvite.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\RaidSense\RaidSenseListener.java
@@ -31,8 +32,8 @@ C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\Resurre
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Raid\RaidParty.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Mysql\MysqlMain.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Main\Main.java
-C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidHelp\RaidSenseHelp.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidParty\RaidPartyKick.java
+C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\Raid\ExitGui.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidParty\RaidPartyCommands.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Mysql\Errors.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\Managers\FileManager.java
@@ -43,7 +44,6 @@ C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\Resurre
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Raid\RaidManager.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidParty\RaidPartyInvite.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Raid\ItemStorage\ItemStorage.java
-C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidParty\RaidPartyExitGUI.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Mysql\Database.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\Admin\StructureCommand.java
 C:\Users\matth\eclipse-workspace\FabledSkyBlock-RezAjax\src\main\java\me\ResurrectAjax\Commands\RaidHistory\RaidHistoryMap.java

@@ -92,20 +92,13 @@ public class FastDataAccess {
 		}
 	}
 	
-	public void putStructure(String name, Location first, Location second) {
-		int pos1X, pos1Z, pos2X, pos2Z;
+	public void putStructure(String name, int pos1x, int pos1z, int pos2x, int pos2z) {
 		HashMap<String, Integer> positions = new HashMap<String, Integer>();
 		
-		pos1X = first.getBlockX();
-		pos1Z = first.getBlockZ();
-		
-		pos2X = second.getBlockX();
-		pos2Z = second.getBlockZ();
-		
-		positions.put("pos1X", pos1X);
-		positions.put("pos1Z", pos1Z);
-		positions.put("pos2X", pos2X);
-		positions.put("pos2Z", pos2Z);
+		positions.put("pos1X", pos1x);
+		positions.put("pos1Z", pos1z);
+		positions.put("pos2X", pos2x);
+		positions.put("pos2Z", pos2z);
 		
 		structures.put(name, positions);
 		

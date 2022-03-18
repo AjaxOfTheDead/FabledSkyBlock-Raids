@@ -17,13 +17,15 @@ Command:
             Message: '&bSkyBlock &8| &cError&8: &ePlease use the SpawnZone tool to select two positions of an area.'
           SpawnComplete:
             Message: '&bSkyBlock &8| &cError&8: &ePlease complete the area selection by using the SpawnZone tool and selecting two positions of an area.'
-  Execute:
+  Error:
     ByConsole:
-      Message: '&bSkyBlock &8| &cError&8: &eThat command has to be executed by a player.'
+      Message: '&bSkyBlock &8| &4Raid&8: &eThat command has to be executed by a player.'
     NotExist:
-      Message: '&bSkyBlock &8| &cError&8: &eThat command doesn''t exist.'
+      Message: '&bSkyBlock &8| &4Raid&8: &eThat command doesn''t exist.'
     BadSyntax:
-      Message: '&bSkyBlock &8| &cError&8: &ePlease do %Syntax% instead.'
+      Message: '&bSkyBlock &8| &4Raid&8: &ePlease do %Syntax% instead.'
+    NoPermission:
+      Message: '&bSkyBlock &8| &4Raid&8: &eYou don''t have permission to execute this command.'
 Island:
   Structure:
     SpawnZoneTool:
@@ -147,3 +149,7 @@ RaidParty:
 RaidSense:
   GetBalance:
     Message: '&c&lRaidSense balance: &a%RaidSense%'
+  NoIsland:
+    Message: '&bSkyBlock &8| &4Raid&8: &eThis player doesn''t have an island.'
+Reload:
+  Message: '&bSkyBlock &8| &4Raid&8: &aConfiguration files reloaded'

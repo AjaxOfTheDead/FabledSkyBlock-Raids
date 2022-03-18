@@ -42,10 +42,9 @@ public class RaidPartyAccept extends CommandInterface{
 		String[] playernames = new String[raidManager.getPartyInvites().keySet().size()];
 		int count = 0;
 		for(UUID player : raidManager.getPartyInvites().keySet()) {
-			if(raidManager.getPartyInvites().get(player).contains(uuid)) {
-				playernames[count] = Bukkit.getOfflinePlayer(player).getName();
-				count++;	
-			}
+			if(!raidManager.getPartyInvites().get(player).contains(uuid)) continue;
+			playernames[count] = Bukkit.getOfflinePlayer(player).getName();
+			count++;	
 		}
 		return playernames;
 	}
@@ -56,34 +55,21 @@ public class RaidPartyAccept extends CommandInterface{
 	}
 
 	public void perform(Player player, String[] args) {
-		if(args.length == 2) {
-			if(Bukkit.getPlayer(args[1]) != null) {
-				Player receiver = Bukkit.getPlayer(args[1]);
-				FileConfiguration language = main.getLanguage();
-				
-				if(main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).contains(player.getUniqueId())) {
-					if(main.getRaidManager().getRaidParties().get(receiver.getUniqueId()) == null) {
-						main.getRaidManager().addRaidParty(receiver.getUniqueId(), new RaidParty(receiver));	
-					}
-					
-					if(main.getRaidManager().getMembersParty(player.getUniqueId()) == null) {
-						main.getRaidManager().getRaidParties().get(receiver.getUniqueId()).addMember(player.getUniqueId());
-						for(UUID member : main.getRaidManager().getRaidParties().get(receiver.getUniqueId()).getMembers()) {
-							if(Bukkit.getPlayer(member) != null) {
-								Bukkit.getPlayer(member).sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.Accepted.Message"), player.getName()));		
-							}
-						}
-						main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).remove(player.getUniqueId());
-					}
-					else {
-						player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.AlreadyInParty.Message")));	
-					}
+		if(args.length != 2 || Bukkit.getPlayer(args[1]) == null) return;
+		Player receiver = Bukkit.getPlayer(args[1]);
+		FileConfiguration language = main.getLanguage();
+		
+		if(!main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).contains(player.getUniqueId())) player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.NoInvite.Message")));
+		else {
+			if(main.getRaidManager().getRaidParties().get(receiver.getUniqueId()) == null) main.getRaidManager().addRaidParty(receiver.getUniqueId(), new RaidParty(receiver));	
+			if(main.getRaidManager().getMembersParty(player.getUniqueId()) != null) player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.AlreadyInParty.Message")));	
+			else {
+				main.getRaidManager().getRaidParties().get(receiver.getUniqueId()).addMember(player.getUniqueId());
+				for(UUID member : main.getRaidManager().getRaidParties().get(receiver.getUniqueId()).getMembers()) {
+					if(Bukkit.getPlayer(member) != null) Bukkit.getPlayer(member).sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.Accepted.Message"), player.getName()));	
 				}
-				else {
-					player.sendMessage(RaidMethods.format(language.getString("RaidParty.Invite.Receive.NoInvite.Message")));	
-				}
-				
-			}
+				main.getRaidManager().getPartyInvites().get(receiver.getUniqueId()).remove(player.getUniqueId());
+			}	
 		}
 		
 	}

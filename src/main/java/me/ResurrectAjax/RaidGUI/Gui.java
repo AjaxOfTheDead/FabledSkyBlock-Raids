@@ -17,14 +17,16 @@ import com.songoda.skyblock.island.Island;
 
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Playerdata.PlayerManager;
-import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
+import net.md_5.bungee.api.ChatColor;
 
 public class Gui {
 	private Inventory inventory;
 	private FileConfiguration guiConfig;
 	private Player player;
 	private Main main;
+	
+	private int page, totalPages;
 	
 	public Gui(Main main, Player player, int size, String name) {
 		this.main = main;
@@ -60,7 +62,6 @@ public class Gui {
 	
 	public void openInventory() {
 		player.openInventory(inventory);
-		main.getGuiManager().getCustomGuiBoolean().put(player.getUniqueId(), true);
 	}
 	
 	public void createTemplate(String guiName) {
@@ -98,6 +99,8 @@ public class Gui {
 			
 			inventory.setItem(slot, item);
 		}
+		
+		main.getGuiManager().setCurrentGui(player.getUniqueId(), this);
 	}
 	
 	
@@ -114,20 +117,19 @@ public class Gui {
 					inventory.setItem(k + startIndex + (9*j), air);
 					if(j == (height-1)) {
 						if(k == 0) {
-							if(page == 0) {
-								inventory.setItem(k + startIndex + (9*j), PlayerManager.getPlayerHead("MHF_ArrowLeft", 0));	
-							}
-							else {
-								inventory.setItem(k + startIndex + (9*j), PlayerManager.getPlayerHead("MHF_ArrowLeft", page-1));
-							}
+							inventory.setItem(k + startIndex + (9*j), PlayerManager.getPlayerHead("MHF_ArrowLeft"));	
 						}
 						if(k == width-1) {
-							if(page == totalPages-1) {
-								inventory.setItem(k + startIndex + (9*j), PlayerManager.getPlayerHead("MHF_ArrowRight", totalPages-1));	
-							}
-							else {
-								inventory.setItem(k + startIndex + (9*j), PlayerManager.getPlayerHead("MHF_ArrowRight", page+1));	
-							}
+							inventory.setItem(k + startIndex + (9*j), PlayerManager.getPlayerHead("MHF_ArrowRight"));	
+						}
+						if(k == width/2) {
+							ItemStack item = new ItemStack(Material.LECTERN);
+							ItemMeta meta = item.getItemMeta();
+							
+							meta.setDisplayName(format("&6&lPage: &7" + (page+1)));
+							item.setItemMeta(meta);
+							
+							inventory.setItem(k + startIndex + (9*j), item);
 						}
 					}
 					else if(j < height){
@@ -150,9 +152,22 @@ public class Gui {
 				inventory.setItem(startIndex + slot[2] + (9*slot[1]), headSlots.get(slot));
 			}
 		}
+		
+		this.page = page;
+		this.totalPages = totalPages;
+		
+		main.getGuiManager().setCurrentGui(player.getUniqueId(), this);
 	}
 	
 	
+	public int getTotalPages() {
+		return totalPages;
+	}
+
+	public int getPage() {
+		return page;
+	}
+
 	public static List<ItemStack> getGuiItems(String[] sectionGui) {
 		Main mn = Main.getInstance();
 		FileConfiguration guiConf = mn.getGuiConfig();

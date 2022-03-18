@@ -41,6 +41,7 @@ import me.ResurrectAjax.Playerdata.PlayerManager;
 import me.ResurrectAjax.Raid.RaidBar;
 import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
+import me.ResurrectAjax.Raid.RaidParty;
 import me.ResurrectAjax.Raid.ItemStorage.ItemStorage;
 
 public class RaidListener implements Listener{
@@ -112,34 +113,35 @@ public class RaidListener implements Listener{
 	
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		if(main.getStorage().getItemStorage().containsKey(event.getPlayer().getUniqueId())) {
-			Player player = event.getPlayer();
+		if(!main.getStorage().getItemStorage().containsKey(event.getPlayer().getUniqueId())) return;
+		Player player = event.getPlayer();
+		
+		event.setCancelled(true);
+		
+		if(event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+		if(player.getInventory().getItemInMainHand().getType() == ItemStorage.getExitItem().getType()) methods.cancelRaid(player);
+		if(player.getInventory().getItemInMainHand().getType() == ItemStorage.getRaidItem().getType()) {
+			RaidBar bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "prepare"));
 			
-			if(event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-				if(player.getInventory().getItemInMainHand().getType() == ItemStorage.getExitItem().getType()) {
-					methods.cancelRaid(player);
-				}
-				if(player.getInventory().getItemInMainHand().getType() == ItemStorage.getRaidItem().getType()) {
-					RaidBar bar = new RaidBar(main, player, "prepare");
-					
-					for(UUID uuid : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
-						if(Bukkit.getPlayer(uuid) != null && !uuid.equals(player.getUniqueId())) {
-							bar.addPlayer(Bukkit.getPlayer(uuid));
-							main.getStorage().restoreItems(Bukkit.getPlayer(uuid));
-							
-							methods.startSpectating(player, spawnLocation, raidManager.getMembersParty(uuid));
-						}
-					}
-					methods.setCurrentRaid(player.getUniqueId(), db.insertRaidParty(raidManager.getMembersParty(player.getUniqueId())));
-					methods.checkForAmplifiers(raidManager.getMembersParty(player.getUniqueId()));
-					
-				}
-				if(player.getInventory().getItemInMainHand().getType() == ItemStorage.getNextItem().getType()) {
-					methods.nextIsland(player);
-				}
+			for(UUID uuid : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
+				if(Bukkit.getPlayer(uuid) == null || uuid.equals(player.getUniqueId())) continue;
+				bar.addPlayer(player);
+				
+				methods.startSpectating(Bukkit.getPlayer(uuid), methods.getIslandSpectator().get(uuid), raidManager.getMembersParty(uuid));
+				
 			}
-			event.setCancelled(true);
+			methods.setCurrentRaid(player.getUniqueId(), db.insertRaidParty(raidManager.getMembersParty(player.getUniqueId())));
+			
+			RaidParty party = raidManager.getMembersParty(player.getUniqueId());
+			for(UUID member : party.getMembers()) {
+				if(Bukkit.getPlayer(member) == null) continue;
+				if(methods.getAmplifiers(party).isEmpty()) continue;
+				Bukkit.getPlayer(member).addPotionEffects(methods.getAmplifiers(party));	
+			}
+			
 		}
+		if(player.getInventory().getItemInMainHand().getType() == ItemStorage.getNextItem().getType()) methods.nextIsland(player);
+		
 	}
 	
 	@EventHandler
@@ -272,7 +274,7 @@ public class RaidListener implements Listener{
 			    			if(event.getFrom().getBlockY() < 30 && block.getType() == Material.AIR) {
 					    		event.setTo(spawnLocation);
 					    		if(methods.getIslandRaider().containsKey(tpPlayer.getUniqueId())) {
-						    		methods.onRaiderQuit(tpPlayer);	
+						    		methods.onRaiderQuit(tpPlayer);
 					    		}	
 			    			}
 			    		}

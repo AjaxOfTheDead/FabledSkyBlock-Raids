@@ -1,6 +1,5 @@
 package me.ResurrectAjax.RaidGUI;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,20 +41,14 @@ public class GuiClickEvent implements Listener{
 		Player player = (Player)event.getWhoClicked();
 		RaidHistoryMap map = main.getRaidHistoryMap();
 		
-		List<String> GUINames = new ArrayList<String>();
-		for(String section : guiConfig.getConfigurationSection("Raid").getKeys(false)) {
-			for(String GUIName : guiConfig.getConfigurationSection("Raid." + section).getKeys(false)) {
-				GUINames.add(RaidMethods.format(guiConfig.getString("Raid." + section + "." + GUIName + ".GUIName")));
-			}	
-		}
-		if(GUINames.contains(event.getView().getTitle()) || raidMethods.isValidDate(event.getView().getTitle()) || guiManager.isInCustomGui(player.getUniqueId())) {
+		if(event.getInventory().getHolder() instanceof RaidInventoryHolder) {
 			event.setCancelled(true);
 			
 			String title = event.getView().getTitle();
 			ItemStack currentItem = event.getCurrentItem();
 			
 			if(currentItem != null) {
-				if(raidManager.getMembersParty(player.getUniqueId()) != null) {
+				if(raidManager.getMembersParty(player.getUniqueId()) != null && !raidMethods.isValidDate(title)) {
 					List<String> lore = Arrays.asList(
 							RaidMethods.format("&7Click to kick player")
 							);
@@ -71,7 +64,11 @@ public class GuiClickEvent implements Listener{
 				
 				if(currentItem.getType().equals(Material.PLAYER_HEAD)) {
 					if(guiManager.getMHFList().contains(ChatColor.stripColor(currentItem.getItemMeta().getDisplayName()))) {
-						int page = Integer.parseInt(ChatColor.stripColor(currentItem.getItemMeta().getLore().get(1)));
+						int page = guiManager.getCurrentGui(player.getUniqueId()).getPage(), totalPages = guiManager.getCurrentGui(player.getUniqueId()).getTotalPages()-1;
+						
+						if(currentItem.equals(PlayerManager.getPlayerHead("MHF_ArrowLeft")) && page > 0) page--;
+						else if(currentItem.equals(PlayerManager.getPlayerHead("MHF_ArrowRight")) && page < totalPages) page++;
+						
 						if(containerID.containsKey(player.getUniqueId())) {
 							guiManager.containerSpecificGUI(player, map, containerID.get(player.getUniqueId()), page);
 						}

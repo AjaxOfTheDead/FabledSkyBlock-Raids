@@ -16,12 +16,21 @@ import me.ResurrectAjax.Raid.RaidManager;
 import me.ResurrectAjax.Raid.RaidMethods;
 import me.ResurrectAjax.Raid.RaidParty;
 
+/**
+ * Class for executing <b>/raid</b>
+ * 
+ * @author ResurrectAjax
+ * */
 public class RaidCommand extends CommandInterface{
 	private RaidMethods raidMethods;
 	private RaidManager raidManager;
 	private Main main;
 	private List<CommandInterface> subcommands = new ArrayList<CommandInterface>();
 	
+	/**
+	 * Constructor of RaidCommand class<br>
+	 * @param main instance of the {@link me.ResurrectAjax.Main.Main} class
+	 * */
 	public RaidCommand(Main main) {
 		this.main = main;
 		this.raidMethods = main.getRaidMethods();
@@ -60,49 +69,41 @@ public class RaidCommand extends CommandInterface{
 		String cmdName = "";
 		if(args.length > 0) {
 			for(CommandInterface command : subcommands) {
-				if(command.getName().equalsIgnoreCase(args[0])) {
-					command.perform(player, args);
-					cmdName = command.getName();
-				}
+				if(!command.getName().equalsIgnoreCase(args[0])) continue;
+				command.perform(player, args);
+				cmdName = command.getName();
 			}
 		}
-		if(cmdName.equalsIgnoreCase("") && args.length > 0) {
-			player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
-		}
-		else if(args.length == 0) {
-			if(!raidManager.getCalledRaidCommands().contains(player.getUniqueId())) {
-				RaidParty party = raidManager.getMembersParty(player.getUniqueId());
-				if(party != null && party.getLeader().equals(player.getUniqueId())) {
-					for(UUID uuid : party.getMembers()) {
-						if(Bukkit.getPlayer(uuid) != null) {
-							Player member = Bukkit.getPlayer(uuid);
-							raidManager.addStartPosition(uuid, member.getLocation());
-						}
-					}
-					raidMethods.enterSpectateMode(player);	
-					raidManager.getCalledRaidCommands().add(player.getUniqueId());
-				
+		if(cmdName.equalsIgnoreCase("") && args.length > 0) player.sendMessage(RaidMethods.format(RaidMethods.convertSyntax(getSyntax())));
+		else if(args.length != 0) player.sendMessage(RaidMethods.format(language.getString("Raid.Error.AlreadyRaiding.Message")));
+		else {
+			if(raidManager.getCalledRaidCommands().contains(player.getUniqueId())) return;
+			RaidParty party = raidManager.getMembersParty(player.getUniqueId());
+			if(party != null && party.getLeader().equals(player.getUniqueId())) {
+				for(UUID uuid : party.getMembers()) {
+					if(Bukkit.getPlayer(uuid) == null) continue;
+					Player member = Bukkit.getPlayer(uuid);
+					raidManager.addStartPosition(uuid, member.getLocation());
 				}
-				else {
-					if(party == null) {
-						raidManager.addStartPosition(player.getUniqueId(), player.getLocation());
-						raidMethods.enterSpectateMode(player);
-					}
-					else {
-						player.sendMessage(RaidMethods.format(language.getString("RaidParty.Leader.NotLeader.Message")));
-					}
-				}
+				raidMethods.enterSpectateMode(player);	
+				raidManager.getCalledRaidCommands().add(player.getUniqueId());
+			
 			}
-			else {
-				player.sendMessage(RaidMethods.format(language.getString("Raid.Error.AlreadyRaiding.Message")));
-			}	
+			else if(party == null){
+				raidManager.addStartPosition(player.getUniqueId(), player.getLocation());
+				raidMethods.enterSpectateMode(player);
+			}
+			else player.sendMessage(RaidMethods.format(language.getString("RaidParty.Leader.NotLeader.Message")));
+			
 		}
 	}
 	
-	public void loadCommands() {
+	private void loadCommands() {
 		subcommands = Arrays.asList(
 				new RaidEnd(main),
-				new RaidHelp(main)
+				new RaidHelp(main),
+				new Reload(main),
+				new ExitGui()
 				);
 	}
 

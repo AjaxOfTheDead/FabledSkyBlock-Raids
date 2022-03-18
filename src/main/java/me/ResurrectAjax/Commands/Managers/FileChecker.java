@@ -11,7 +11,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import me.ResurrectAjax.Main.Main;
-
+/**
+ * Class for checking files (adjusted copy of songoda FileChecker)
+ * 
+ * @author ResurrectAjax
+ * */
 public class FileChecker {
 
     private final FileManager fileManager;

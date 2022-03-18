@@ -24,13 +24,13 @@ import com.songoda.skyblock.island.Island;
 import com.songoda.skyblock.island.IslandManager;
 import com.songoda.skyblock.island.IslandRole;
 
+import me.ResurrectAjax.Commands.Raid.ExitGui;
 import me.ResurrectAjax.Commands.Raid.RaidEnd;
 import me.ResurrectAjax.Commands.RaidHistory.SpecificHistory;
 import me.ResurrectAjax.Commands.RaidHistory.StolenItems;
 import me.ResurrectAjax.Commands.RaidParty.RaidPartyAccept;
 import me.ResurrectAjax.Commands.RaidParty.RaidPartyCancelInvite;
 import me.ResurrectAjax.Commands.RaidParty.RaidPartyDeny;
-import me.ResurrectAjax.Commands.RaidParty.RaidPartyExitGUI;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Mysql.FastDataAccess;
 import me.ResurrectAjax.Playerdata.PlayerManager;
@@ -42,12 +42,16 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 
+/**
+ * A class that contains methods which are used across the plugin 
+ * 
+ * @author ResurrectAjax
+ */
 public class RaidMethods {
 	
 	private Main main;
 	private RaidManager raidManager;
 	private IslandManager islandManager;
-	private FileConfiguration language, configLoad;
 	private Location spawnLocation;
 	private Random rand = new Random();
 	private FastDataAccess fdb;
@@ -83,10 +87,6 @@ public class RaidMethods {
 		//get fast data access
 		fdb = main.getFastDataAccess();
 		
-		//get the contents of language.yml
-		language = main.getLanguage();
-		configLoad = main.getConfiguration();
-		
 		//load spawn
 		spawnLocation = main.getSpawnLocation();
 		
@@ -97,10 +97,13 @@ public class RaidMethods {
 		return spectatedIslands;
 	}
 	
-	//replace the "%Syntax%" in the language.yml file
+	/**
+	 * @param syntax Convert string that contains '%Syntax%' into the syntax of the sent command
+	 * @return String with the syntax given by {@link me.ResurrectAjax.Commands.Managers.CommandInterface#getSyntax()}
+	 * */
 	public static String convertSyntax(String syntax) {
 		FileConfiguration configLoad = Main.getInstance().getLanguage();
-		String syntaxMsg = configLoad.getString("Command.Execute.BadSyntax.Message");
+		String syntaxMsg = configLoad.getString("Command.Error.BadSyntax.Message");
 		String newstr = syntaxMsg;
 		
 		if(newstr.contains("%Syntax%")) {
@@ -123,21 +126,25 @@ public class RaidMethods {
 		if(getIslandSpectator().containsKey(player.getUniqueId())) {
 			
 			//check if player was the last spectator of that island
-			OfflinePlayer partyLeader = Bukkit.getOfflinePlayer(raidManager.getMembersParty(player.getUniqueId()).getLeader());
+			UUID partyLeader = raidManager.getMembersParty(player.getUniqueId()).getLeader();
 			if(isLastSpectator(player)) {
-				raidManager.getBossBar().get(partyLeader.getUniqueId()).cancelTask();
+				raidManager.getBossBar().get(partyLeader).cancelTask();
 			}
-			for(UUID membere : raidManager.getRaidParties().get(partyLeader.getUniqueId()).getMembers()) {
+			for(UUID membere : raidManager.getRaidParties().get(partyLeader).getMembers()) {
 				if(Bukkit.getPlayer(membere) != null) {
 					OfflinePlayer member = Bukkit.getOfflinePlayer(membere);
 					if(member.isOnline()) {
 						Player members = (Player)member;
-						raidManager.getBossBar().get(partyLeader.getUniqueId()).getBar().removePlayer(members);
+						raidManager.getBossBar().get(partyLeader).getBar().removePlayer(members);
 						
 						members.getInventory().clear();
-					}	
+					}
+					for(Player players : Bukkit.getOnlinePlayers()) {
+						players.showPlayer(main, Bukkit.getPlayer(membere));
+					}
 				}
 			}
+			raidManager.getBossBar().get(partyLeader).cancelTask();
 		}
 	}
 	
@@ -276,7 +283,9 @@ public class RaidMethods {
 	}
 	
 	public void enterSpectateMode(Player player) {
-		
+		FileConfiguration language, configLoad;
+		language = main.getLanguage();
+		configLoad = main.getConfiguration();
 		//check if there are other islands
 		if(main.getIslandPositions().size() > 1) {
 			UUID raiderOwner = PlayerManager.getPlayersIsland(player.getUniqueId()).getOwnerUUID();
@@ -428,15 +437,8 @@ public class RaidMethods {
 	public void onRaiderQuit(Player player) {
 	
 		if(getIslandRaider().containsKey(player.getUniqueId())) {
-			if(raidManager.getRaidParties().get(player.getUniqueId()) != null) {
+			if(raidManager.getMembersParty(player.getUniqueId()) != null) {
 				checkLastRaider(player);
-			}
-			else {
-				for(UUID uuid : getIslandRaider().keySet()) {
-					if(raidManager.getRaidParties().get(uuid) != null && getIslandRaider().get(uuid) == getIslandRaider().get(player.getUniqueId())) {
-						checkLastRaider(Bukkit.getPlayer(uuid));
-					}
-				}
 			}
 			removeRaider(player.getUniqueId());
 			player.teleport(spawnLocation);
@@ -452,25 +454,27 @@ public class RaidMethods {
 				checkLastSpectator(player);
 			}
 			else {
-				for(UUID uuid : getIslandRaider().keySet()) {
-					if(raidManager.getRaidParties().get(uuid) != null && getIslandRaider().get(uuid) == getIslandRaider().get(player.getUniqueId())) {
+				for(UUID uuid : getIslandSpectator().keySet()) {
+					if(raidManager.getRaidParties().get(uuid) != null && getIslandSpectator().get(uuid) == getIslandSpectator().get(player.getUniqueId())) {
 						checkLastSpectator(Bukkit.getPlayer(uuid));
 					}
 				}
 			}
 			
+			player.teleport(raidManager.getStartPositions().get(player.getUniqueId()));
 			main.getStorage().restoreItems(player);
-			cancelRaid(player);
 			raidManager.getCalledRaidCommands().remove(player.getUniqueId());
 		}
 	}
 	
 	//method to check if a player is the last of the island's raiders
 	public void checkLastRaider(Player player) {
+		FileConfiguration language;
+		language = main.getLanguage();
 		if(getIslandRaider().containsKey(player.getUniqueId())) {
 			RaidParty party = raidManager.getMembersParty(player.getUniqueId());
 			if(isLastRaider(player)) {
-				Location raidedIsland = getIslandRaider().get(party.getLeader());
+				Location raidedIsland = getIslandRaider().get(player.getUniqueId());
 				for(UUID member : party.getMembers()) {
 					if(Bukkit.getPlayer(member) != null) {
 						Bukkit.getPlayer(member).sendMessage(format(language.getString("Raid.Raid.Outcome.Lost.Message")));
@@ -499,6 +503,8 @@ public class RaidMethods {
 	
 	//method to check if a player is the last of the island's spectators
 	public void checkLastSpectator(Player player) {
+		FileConfiguration language;
+		language = main.getLanguage();
 		if(getIslandSpectator().containsKey(player.getUniqueId())) {
 			if(isLastSpectator(player)) {
 				Location loc = getIslandSpectator().get(player.getUniqueId()), 
@@ -518,6 +524,8 @@ public class RaidMethods {
 				raidManager.getBossBar().get(party.getLeader()).getBar().removeAll();
 				
 				checkLeader(player.getUniqueId());
+				
+				cancelRaid(player);
 			}	
 		}
 	}
@@ -594,15 +602,23 @@ public class RaidMethods {
 		OfflinePlayer owner = Bukkit.getOfflinePlayer(fdb.getOwnerByLocation(tempIsland));
 		islandManager.loadIsland(owner);
 		
+		RaidBar bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "raid"));
+		
 		for(UUID member : raidManager.getMembersParty(player.getUniqueId()).getMembers()) {
 			if(Bukkit.getPlayer(member) != null) {
 				Bukkit.getPlayer(member).teleport(raidIsland);
 				
 				Bukkit.getPlayer(member).setAllowFlight(false);
-				Bukkit.getPlayer(member).setInvulnerable(false);
+				Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(main, new Runnable() {
+				    public void run() {
+				    	Bukkit.getPlayer(member).setInvulnerable(false);
+				    }
+			    }, 20);
 				removeSpectator(member);
 				main.getStorage().restoreItems(Bukkit.getPlayer(member));
 				addRaider(member, raidIsland);
+				
+				bar.addPlayer(Bukkit.getPlayer(member));
 				
 				for(Player players : Bukkit.getOnlinePlayers()) {
 					players.showPlayer(main, Bukkit.getPlayer(member));
@@ -610,7 +626,6 @@ public class RaidMethods {
 			}
 		}
 		
-		RaidBar bar = raidManager.addRaidBar(player.getUniqueId(), new RaidBar(main, player, "raid"));
 		for(IslandRole ir : IslandRole.getRoles()) {
 			for(UUID member : islandManager.getIslandByOwner(owner).getRole(ir)) {
 				if(Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(member))) {
@@ -635,35 +650,33 @@ public class RaidMethods {
 		enterSpectateMode(player);
 	}
 	
-	public void checkForAmplifiers(RaidParty party) {
-		if(configLoad.getConfigurationSection("Raid.RaidSense.SenseMultipliers").getKeys(false).iterator().hasNext()) {
-			UUID raidIslandOwner = PlayerManager.getPlayersIsland(party.getLeader()).getOwnerUUID();
-			
-			String configSection = "Raid.RaidSense.SenseMultipliers";
-			List<String> minValues = new ArrayList<String>(configLoad.getConfigurationSection(configSection).getKeys(false));
-			for(int i = 0; i < configLoad.getConfigurationSection(configSection).getKeys(false).size(); i++) {
-				if(i+1 < minValues.size()) {
-					if(fdb.getRaidSense(raidIslandOwner) > Integer.parseInt(minValues.get(i)) && fdb.getRaidSense(raidIslandOwner) < Integer.parseInt(minValues.get(i+1))) {
-						for(UUID member : party.getMembers()) {
-							for(PotionEffect effect : getPotionEffects(configLoad.getConfigurationSection(configSection + "." + minValues.get(i) + ".PotionEffects"))) {
-								if(Bukkit.getPlayer(member) != null) {
-									Bukkit.getPlayer(member).addPotionEffect(effect);
-								}
-							}
-						}
-					}	
+	public List<PotionEffect> getAmplifiers(RaidParty party) {
+		List<PotionEffect> effects = new ArrayList<PotionEffect>();
+		
+		FileConfiguration configLoad;
+		configLoad = main.getConfiguration();
+		
+		if(!configLoad.getConfigurationSection("Raid.RaidSense.SenseMultipliers").getKeys(false).iterator().hasNext()) return effects;
+		
+		UUID raidIslandOwner = PlayerManager.getPlayersIsland(party.getLeader()).getOwnerUUID();
+		String configSection = "Raid.RaidSense.SenseMultipliers";
+		List<String> minValues = new ArrayList<String>(configLoad.getConfigurationSection(configSection).getKeys(false));
+		for(int i = 0; i < minValues.size(); i++) {
+			if(i+1 < minValues.size()) {
+				if(fdb.getRaidSense(raidIslandOwner) < Integer.parseInt(minValues.get(i)) || fdb.getRaidSense(raidIslandOwner) > Integer.parseInt(minValues.get(i+1))) continue;
+				for(PotionEffect effect : getPotionEffects(configLoad.getConfigurationSection(configSection + "." + minValues.get(i) + ".PotionEffects"))) {
+					effects.add(effect);	
+				}		
+			}
+			else {
+				if(fdb.getRaidSense(raidIslandOwner) < Integer.parseInt(minValues.get(i))) continue;
+				for(PotionEffect effect : getPotionEffects(configLoad.getConfigurationSection(configSection + "." + minValues.get(i) + ".PotionEffects"))) {
+					effects.add(effect);	
 				}
-				else {
-					for(UUID member : party.getMembers()) {
-						for(PotionEffect effect : getPotionEffects(configLoad.getConfigurationSection(configSection + "." + minValues.get(i) + ".PotionEffects"))) {
-							if(Bukkit.getPlayer(member) != null) {
-								Bukkit.getPlayer(member).addPotionEffect(effect);
-							}
-						}
-					}
-				}
+				
 			}
 		}
+		return effects;
 	}
 	
 	private List<PotionEffect> getPotionEffects(ConfigurationSection section) {
@@ -684,7 +697,7 @@ public class RaidMethods {
 				RaidPartyAccept.NAME,
 				RaidPartyDeny.NAME,
 				RaidPartyCancelInvite.NAME,
-				RaidPartyExitGUI.NAME,
+				ExitGui.NAME,
 				StolenItems.NAME,
 				SpecificHistory.NAME
 				));

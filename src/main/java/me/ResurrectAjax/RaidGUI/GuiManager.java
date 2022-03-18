@@ -25,11 +25,19 @@ public class GuiManager {
 	private FileConfiguration guiConfig;
 	private List<String> MHF_Heads = new ArrayList<String>();
 	private HashMap<UUID, Integer> selectedRaid = new HashMap<UUID, Integer>();
-	private HashMap<UUID, Boolean> inCustomGui = new HashMap<UUID, Boolean>();
+	private HashMap<UUID, Gui> currentGui = new HashMap<UUID, Gui>();
+	
+	public Gui getCurrentGui(UUID uuid) {
+		return currentGui.get(uuid);
+	}
+	
+	public void setCurrentGui(UUID uuid, Gui gui) {
+		currentGui.put(uuid, gui);
+	}
+
 	public GuiManager(Main main) {
 		this.main = main;
 		this.raidManager = main.getRaidManager();
-		guiConfig = main.getGuiConfig();
 		
 		MHF_Heads.addAll(Arrays.asList(
 				"Back",
@@ -46,18 +54,8 @@ public class GuiManager {
 		return selectedRaid;
 	}
 	
-	public boolean isInCustomGui(UUID uuid) {
-		if(!inCustomGui.containsKey(uuid)) {
-			return false;
-		}
-		return inCustomGui.get(uuid);
-	}
-	
-	public HashMap<UUID, Boolean> getCustomGuiBoolean() {
-		return inCustomGui;
-	}
-	
 	public Gui partyLeaderGui1(Player player, int playerPage) {
+		guiConfig = main.getGuiConfig();
 		Gui gui = new Gui(main, player, guiConfig.getInt("Raid.RaidParty.OverView.Rows"), RaidMethods.format(guiConfig.getString("Raid.RaidParty.OverView.GUIName")));
 		Inventory inventory = gui.getInventory();
 		
@@ -75,12 +73,14 @@ public class GuiManager {
 		}
 		
 		gui.createItemList(29, 5, 3, inventory, heads, playerPage);
+		
 		gui.openInventory();
 		
 		return gui;
 	}
 	
 	public Gui confirmGui(Player player, ItemStack item) {
+		guiConfig = main.getGuiConfig();
 		Gui gui = new Gui(main, player, guiConfig.getInt("Raid.RaidParty.Confirm.Rows"), RaidMethods.format(guiConfig.getString("Raid.RaidParty.Confirm.GUIName")));
 		Inventory inventory = gui.getInventory();
 		
@@ -92,6 +92,7 @@ public class GuiManager {
 	
 	
 	public Gui historySelectGui(Player player) {
+		guiConfig = main.getGuiConfig();
 		Gui gui = new Gui(main, player, guiConfig.getInt("Raid.RaidHistory.HistorySelect.Rows"), RaidMethods.format(guiConfig.getString("Raid.RaidHistory.HistorySelect.GUIName")));
 		gui.openInventory();
 		
@@ -99,6 +100,7 @@ public class GuiManager {
 	}
 	
 	public Gui historyDefendingGUI(Player player, RaidHistoryMap map, int playerPage) {
+		guiConfig = main.getGuiConfig();
 		String guiName = RaidMethods.format(guiConfig.getString("Raid.RaidHistory.HistoryDefending.GUIName"));
 		Gui gui = new Gui(main, player, guiConfig.getInt("Raid.RaidHistory.HistoryDefending.Rows"), guiName);
 		RaidHistoryMap historyMap = main.getRaidHistoryMap();
@@ -131,6 +133,7 @@ public class GuiManager {
 	}
 	
 	public Gui historySpecificGUI(Player player, RaidHistoryMap map, int raidID, String date, int playerPage) {
+		guiConfig = main.getGuiConfig();
 		String guiName = RaidMethods.format(guiConfig.getString("Raid.RaidHistory.SpecificHistory.GUIName"));
 		Gui gui = new Gui(main, player, guiConfig.getInt("Raid.RaidHistory.SpecificHistory.Rows"), guiName, date);
 		
@@ -160,6 +163,7 @@ public class GuiManager {
 	}
 	
 	public Gui historyStolenItemsGUI(Player player, RaidHistoryMap map, int raidID, int playerPage) {
+		guiConfig = main.getGuiConfig();
 		Gui gui = new Gui(main, player, guiConfig.getInt("Raid.RaidHistory.StolenItemsHistory.Rows"), RaidMethods.format(guiConfig.getString("Raid.RaidHistory.StolenItemsHistory.GUIName")));
 		
 		List<ItemStack> blockList = new ArrayList<ItemStack>();
@@ -185,10 +189,11 @@ public class GuiManager {
 	}
 	
 	public Gui containerSpecificGUI(Player player, RaidHistoryMap map, int blockID, int playerPage) {
+		guiConfig = main.getGuiConfig();
 		Gui gui = new Gui(main, player, guiConfig.getInt("Raid.RaidHistory.StolenContainerHistory.Rows"), RaidMethods.format(guiConfig.getString("Raid.RaidHistory.StolenContainerHistory.GUIName")), blockID + "");
 		
 		List<ItemStack> itemList = new ArrayList<ItemStack>();
-		HashMap<Integer, ItemStack> items = map.getItemsByContainerBlockID(blockID);
+		LinkedHashMap<Integer, ItemStack> items = map.getItemsByContainerBlockID(blockID);
 		for(int itemID : items.keySet()) {
 			itemList.add(items.get(itemID));
 		}

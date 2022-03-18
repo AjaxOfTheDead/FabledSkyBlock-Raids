@@ -1,4 +1,4 @@
-package me.ResurrectAjax.Commands.RaidParty;
+package me.ResurrectAjax.Commands.Raid;
 
 import java.util.List;
 import java.util.UUID;
@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
 
-public class RaidPartyExitGUI extends CommandInterface{
+public class ExitGui extends CommandInterface{
 	public static String NAME = "exitgui";
 	
 	public String getName() {
@@ -17,12 +17,12 @@ public class RaidPartyExitGUI extends CommandInterface{
 
 	public String getSyntax() {
 		// TODO Auto-generated method stub
-		return "/raidparty exitgui";
+		return "/<command> exitgui";
 	}
 
 	public String getDescription() {
 		// TODO Auto-generated method stub
-		return "exit the raidparty gui";
+		return "exit the gui";
 	}
 
 	public String[] getArguments(UUID uuid) {
@@ -41,5 +41,4 @@ public class RaidPartyExitGUI extends CommandInterface{
 		player.closeInventory();
 		
 	}
-	
 }

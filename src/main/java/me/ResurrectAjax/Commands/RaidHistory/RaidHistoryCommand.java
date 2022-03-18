@@ -7,12 +7,22 @@ import java.util.UUID;
 import org.bukkit.entity.Player;
 
 import me.ResurrectAjax.Commands.Managers.CommandInterface;
+import me.ResurrectAjax.Commands.Raid.ExitGui;
 import me.ResurrectAjax.Main.Main;
 
+/**
+ * Class for getting the raid history of an island
+ * 
+ * @author ResurrectAjax
+ * */
 public class RaidHistoryCommand extends CommandInterface{
 	private Main main;
 	private List<CommandInterface> subcommands;
 	
+	/**
+	 * Constructor of RaidHistoryCommand
+	 * @param main instance of the {@link me.ResurrectAjax.Main.Main} class
+	 * */
 	public RaidHistoryCommand(Main main) {
 		this.main = main;
 		loadSubCommands();
@@ -56,15 +66,13 @@ public class RaidHistoryCommand extends CommandInterface{
 		case 1:
 			boolean isCommand = false;
 			for(CommandInterface command : subcommands) {
-				if(args[0].equalsIgnoreCase(command.getName())) {
-					command.perform(player, args);
-					isCommand = true;
-				}
+				if(!args[0].equalsIgnoreCase(command.getName())) continue;
+				command.perform(player, args);
+				isCommand = true;
 			}
-			if(!isCommand) {
-				// main.getGuiManager().historySelectGui(player);
-				main.getGuiManager().historyDefendingGUI(player, main.getRaidHistoryMap(), 0);
-			}
+			if(isCommand) return;
+			// main.getGuiManager().historySelectGui(player);
+			main.getGuiManager().historyDefendingGUI(player, main.getRaidHistoryMap(), 0);
 			break;
 		default:
 			// main.getGuiManager().historySelectGui(player);
@@ -78,7 +86,8 @@ public class RaidHistoryCommand extends CommandInterface{
 		subcommands = Arrays.asList(
 				new RaidHistoryDefend(main),
 				new StolenItems(main),
-				new SpecificHistory(main)
+				new SpecificHistory(main),
+				new ExitGui()
 				);
 	}
 	

@@ -157,6 +157,7 @@ public class RaidBar {
 				public void run() {
 					totalTime = (int) Math.round(progress*configTime);
 					if(title.contains("%TimeLeft%")) {
+						
 						String formatTitle = RaidMethods.format(title, totalTime + "");
 						bar.setTitle(formatTitle);
 						
@@ -168,9 +169,6 @@ public class RaidBar {
 								if(totalTime >= configTime) {
 									new RaidTitles(title, subtitle, actionbar, Bukkit.getPlayer(uuid), totalTime, main);	
 									soundManager.playSound(Bukkit.getPlayer(uuid), Sound.EVENT_RAID_HORN, 100.0F, 100.0F);
-								}
-								if(raidMethods.getIslandSpectator().containsKey(uuid)) {
-									raidMethods.exitRaidSpectator(Bukkit.getPlayer(uuid));	
 								}
 							}
 						}
@@ -192,6 +190,11 @@ public class RaidBar {
 									}
 								}
 							}	
+							
+							for(UUID member : raidManager.getMembersParty(player).getMembers()) {
+								if(Bukkit.getPlayer(member) == null || member.equals(player)) continue;
+								bar.addPlayer(Bukkit.getPlayer(member));
+							}
 						}
 					}
 					if(progress < 0) {

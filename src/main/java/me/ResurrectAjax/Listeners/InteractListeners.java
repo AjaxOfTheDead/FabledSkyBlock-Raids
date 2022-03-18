@@ -1,7 +1,10 @@
 package me.ResurrectAjax.Listeners;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang.WordUtils;
@@ -9,20 +12,22 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.Container;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
@@ -50,6 +55,7 @@ import com.songoda.skyblock.world.WorldManager;
 import me.ResurrectAjax.Main.Main;
 import me.ResurrectAjax.Raid.RaidMethods;
 import me.ResurrectAjax.Raid.RaidParty;
+import me.ResurrectAjax.RaidGUI.RaidInventoryHolder;
 import me.ResurrectAjax.Utils.Structure.StructureUtil;
 
 public class InteractListeners implements Listener {
@@ -71,6 +77,49 @@ public class InteractListeners implements Listener {
             	setPosition(2, event);
             }
         }
+    }
+    
+    private HashMap<UUID, InventoryType> clickedInventory = new HashMap<UUID, InventoryType>();
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+    	Player player = (Player) event.getWhoClicked();
+    	RaidMethods raidMethods = main.getRaidMethods();
+		Inventory closeInventory = event.getInventory();
+		
+		List<InventoryAction> place = Arrays.asList(
+				InventoryAction.PLACE_ALL,
+				InventoryAction.PLACE_ONE,
+				InventoryAction.PLACE_SOME
+				);
+		
+		if(raidMethods.getIslandRaider().containsKey(player.getUniqueId()) && !(closeInventory.getHolder() instanceof RaidInventoryHolder)) {
+			ItemStack item = event.getCurrentItem();
+			
+			boolean isMoved = false;
+			if(place.contains(event.getAction())) {
+				if(!clickedInventory.isEmpty() && !clickedInventory.get(player.getUniqueId()).equals(InventoryType.PLAYER) && event.getClickedInventory().getType().equals(InventoryType.PLAYER)) {
+					isMoved = true;
+				}
+			}
+			else if(event.getAction().equals(InventoryAction.MOVE_TO_OTHER_INVENTORY) && !event.getClickedInventory().getType().equals(InventoryType.PLAYER)) {
+				isMoved = true;
+			}
+			
+			clickedInventory.put(player.getUniqueId(), event.getClickedInventory().getType());
+			
+			if(isMoved) {
+				RaidParty party = main.getRaidManager().getMembersParty(player.getUniqueId());
+				
+				party.addStolenItems(player.getUniqueId(), new ItemStack(item));
+			}
+		}
+    }
+    
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+    	if(clickedInventory.containsKey(event.getPlayer().getUniqueId())) {
+        	clickedInventory.remove(event.getPlayer().getUniqueId());	
+    	}
     }
     
     //function for setting the first or second position
@@ -116,7 +165,7 @@ public class InteractListeners implements Listener {
                         plugin.getPlayerDataManager().getPlayerData(player).getArea().setPosition(position, event.getClickedBlock().getLocation());
                         messageManager.sendMessage(player,
                         		plugin.getFileManager().getConfig(new File(plugin.getDataFolder(), "language.yml")).getFileConfiguration().getString("Island.Structure.Tool.Position.Message")
-                                        .replace("%Position%", position.toString()));
+                                        .replace("%position", position.toString()));
                     }
                     catch(Exception e) {
                     	
@@ -524,39 +573,5 @@ public class InteractListeners implements Listener {
         if (plugin.getStackableManager() != null && plugin.getStackableManager().isStacked(event.getRightClicked().getLocation().getBlock().getLocation())) {
             event.setCancelled(true);
         }
-    }
-    
-    
-    private HashMap<UUID, ItemStack[]> playerInventories = new HashMap<UUID, ItemStack[]>();
-    @EventHandler
-    public void onInventoryOpen(InventoryOpenEvent event) {
-    	RaidMethods raidMethods = main.getRaidMethods();
-    	Player player = (Player)event.getPlayer();
-    	
-    	if(!raidMethods.getIslandRaider().isEmpty() && raidMethods.getIslandRaider().containsKey(player.getUniqueId())) {
-    		IslandManager islandManager = main.getSkyBlock().getIslandManager();
-    		UUID islandUUID = raidMethods.getIslandUUIDByLocation(raidMethods.getIslandRaider().get(player.getUniqueId()));
-    		Island island = islandManager.getIslandByUUID(islandUUID);
-    		
-    		if(island.isInBorder(player.getLocation()) && !main.getGuiManager().isInCustomGui(player.getUniqueId())) {
-    			playerInventories.put(player.getUniqueId(), event.getInventory().getContents());
-    		}
-    	}
-    }
-    
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-		Player player = (Player) event.getPlayer();
-		
-    	if(playerInventories.containsKey(player.getUniqueId()) && !main.getGuiManager().isInCustomGui(player.getUniqueId())) {
-    		ItemStack[] oldInv = playerInventories.get(player.getUniqueId()), newInv = event.getInventory().getContents();
-    		for(int i = 0; i < oldInv.length; i++) {
-    			
-    		}
-    	}
-		
-		if(event.getReason().equals(InventoryCloseEvent.Reason.PLAYER)) {
-			main.getGuiManager().getCustomGuiBoolean().put(player.getUniqueId(), false);	
-		}
     }
 }
