@@ -19,4 +19,13 @@ The database is stored locally in the server files.
 - Raid Commands: 
   - /raid help - _Get all the Raid commands_
   - /raid end - _End the current raid_
-  - 
+  - /raidhistory - _Open the RaidHistory GUI_
+  - /raidparty help - _Get all the RaidParty commands_
+  - /raidsense <player> - _Get the RaidSense of a player's island_
+
+- RaidParty Commands:
+  - /raidparty help - _Get a list of all the RaidParty commands_
+  - /raidparty invite <player> - _Invite a player to your party_
+  - /raidparty leave - _Leave your party_
+  - /raidparty kick <player> - _Kick a player from your party_
+  - /raidparty - _Opens the RaidParty GUI_
